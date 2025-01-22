@@ -13,3 +13,7 @@ This repository contains configuration files and settings for managing the GitHu
 - Additional customizations
 
 Feel free to explore and suggest improvements!
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
