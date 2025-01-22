@@ -3,8 +3,6 @@ import { startOfDay, isSameDay } from 'date-fns'
 import { Calendar } from './ui/calendar'
 import { Button } from './ui/button'
 import { Habit } from '../types'
-import type { DayPickerSingleProps } from 'react-day-picker'
-
 interface HabitTrackerProps {
   habit: Habit
   onComplete: (date: Date) => void
@@ -52,7 +50,7 @@ export const HabitTracker: React.FC<HabitTrackerProps> = ({
       <Calendar
         mode="multiple"
         selected={habit.completions.map(date => new Date(date))}
-        onSelect={(value: DateValue | DateValue[] | undefined) => {
+        onSelect={(value: Date[] | undefined) => {
           if (Array.isArray(value) && value.length > 0) {
             handleDateSelect(value[value.length - 1])
           }
