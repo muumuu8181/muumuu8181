@@ -1,0 +1,15 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Logs
+*.log
+
+# Output directories
+news_output/
+full_text_output/
+url_indexes/
+
+# IDE
+.vscode/
+.idea/

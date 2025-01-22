@@ -131,7 +131,7 @@ class ContentFetcher:
         # Add delay between requests
         time.sleep(self.request_delay)
         
-        if 'bbc.co.uk' in domain:
+        if any(bbc_domain in domain for bbc_domain in ['bbc.co.uk', 'bbc.com']):
             return self.fetch_bbc_content(url)
         elif 'reuters.com' in domain:
             return self.fetch_reuters_content(url)
