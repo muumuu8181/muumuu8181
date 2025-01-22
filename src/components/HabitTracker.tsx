@@ -3,7 +3,7 @@ import { startOfDay, isSameDay } from 'date-fns'
 import { Calendar } from './ui/calendar'
 import { Button } from './ui/button'
 import { Habit } from '../types'
-import type { DateValue } from 'react-day-picker'
+import type { DayPickerSingleProps } from 'react-day-picker'
 
 interface HabitTrackerProps {
   habit: Habit
