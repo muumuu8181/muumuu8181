@@ -3,12 +3,34 @@ import * as React from "react"
 import { cn } from "../../lib/utils"
 
 const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
-  ({ className, type, ...props }, ref) => {
+  ({ className, type, onChange, onFocus, onBlur, ...props }, ref) => {
+    const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+      // Keep keyboard open by preventing default behavior
+      e.stopPropagation()
+      // Call original onFocus if provided
+      if (onFocus) {
+        onFocus(e)
+      }
+    }
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      // Prevent keyboard dismissal
+      e.stopPropagation()
+      // Call original onChange if provided
+      if (onChange) {
+        onChange(e)
+      }
+    }
+
     const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-      // Prevent keyboard from closing on mobile
+      // Prevent keyboard dismissal on blur
       e.preventDefault()
-      if (props.onBlur) {
-        props.onBlur(e)
+      e.stopPropagation()
+      // Keep focus on the input
+      e.target.focus()
+      // Call original onBlur if provided
+      if (onBlur) {
+        onBlur(e)
       }
     }
 
@@ -20,8 +42,10 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
           className
         )}
         ref={ref}
-        onBlur={handleBlur}
         {...props}
+        onFocus={handleFocus}
+        onChange={handleChange}
+        onBlur={handleBlur}
       />
     )
   }
