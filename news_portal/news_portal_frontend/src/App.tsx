@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import UrlsPage from './pages/UrlsPage';
 import TagsPage from './pages/TagsPage';
 import ArticlesPage from './pages/ArticlesPage';
+import ArticleDetailPage from './pages/ArticleDetailPage';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
         <main>
           <Routes>
             <Route path="/" element={<ArticlesPage />} />
+            <Route path="/articles/:articleId" element={<ArticleDetailPage />} />
             <Route path="/urls" element={<UrlsPage />} />
             <Route path="/tags" element={<TagsPage />} />
           </Routes>

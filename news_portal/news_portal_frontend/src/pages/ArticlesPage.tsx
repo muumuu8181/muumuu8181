@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
@@ -17,6 +18,7 @@ interface Article extends ApiArticle {
 }
 
 export default function ArticlesPage() {
+  const navigate = useNavigate();
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -164,7 +166,13 @@ export default function ArticlesPage() {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground line-clamp-3">{article.content}</p>
-              <Button variant="link" className="mt-2 p-0">Read more</Button>
+              <Button 
+                variant="link" 
+                className="mt-2 p-0"
+                onClick={() => navigate(`/articles/${article.id}`)}
+              >
+                Read more
+              </Button>
             </CardContent>
           </Card>
           ))}
