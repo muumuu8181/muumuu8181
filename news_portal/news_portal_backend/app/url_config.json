@@ -1,0 +1,72 @@
+{
+  "sources": [
+    {
+      "url": "http://feeds.bbci.co.uk/news/science_and_environment/rss.xml",
+      "name": "BBC Science",
+      "type": "rss",
+      "tags": ["physics", "science"],
+      "active": true
+    },
+    {
+      "url": "http://feeds.bbci.co.uk/news/health/rss.xml",
+      "name": "BBC Health",
+      "type": "rss",
+      "tags": ["medical", "health"],
+      "active": true
+    },
+    {
+      "url": "http://feeds.bbci.co.uk/news/business/rss.xml",
+      "name": "BBC Business",
+      "type": "rss",
+      "tags": ["economics", "business"],
+      "active": true
+    },
+    {
+      "url": "https://www.reuters.com/arc/outboundfeeds/science-news/?outputType=xml",
+      "name": "Reuters Science",
+      "type": "sitemap",
+      "tags": ["physics", "science"],
+      "active": true
+    },
+    {
+      "url": "https://www.reuters.com/arc/outboundfeeds/healthcare-news/?outputType=xml",
+      "name": "Reuters Healthcare",
+      "type": "sitemap",
+      "tags": ["medical", "health"],
+      "active": true
+    },
+    {
+      "url": "https://www.reuters.com/arc/outboundfeeds/business-news/?outputType=xml",
+      "name": "Reuters Business",
+      "type": "sitemap",
+      "tags": ["economics", "business"],
+      "active": true
+    }
+  ],
+  "tags": [
+    {
+      "name": "physics",
+      "category": "science"
+    },
+    {
+      "name": "medical",
+      "category": "health"
+    },
+    {
+      "name": "economics",
+      "category": "business"
+    },
+    {
+      "name": "science",
+      "category": "science"
+    },
+    {
+      "name": "health",
+      "category": "health"
+    },
+    {
+      "name": "business",
+      "category": "business"
+    }
+  ]
+}
