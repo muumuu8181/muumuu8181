@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Button } from './components/ui/button'
 import { Plus } from 'lucide-react'
-import { SubTask, Goal, Tag, Habit } from './types'
+import { SubTask, Goal } from './types'
 import { GoalCard } from './components/GoalCard'
-import { HabitTracker } from './components/HabitTracker'
 
 function App() {
   const [goals, setGoals] = useState<Goal[]>(() => {
@@ -11,34 +10,7 @@ function App() {
     return savedGoals ? JSON.parse(savedGoals) : []
   })
 
-  const [habits, setHabits] = useState<Habit[]>(() => {
-    const savedHabits = localStorage.getItem('habits')
-    return savedHabits ? JSON.parse(savedHabits) : []
-  })
 
-  useEffect(() => {
-    localStorage.setItem('habits', JSON.stringify(habits))
-  }, [habits])
-
-  const addTag = (goalId: string, tag: Tag) => {
-    setGoals(goals.map(goal => {
-      if (goal.id !== goalId) return goal
-      return {
-        ...goal,
-        tags: [...(goal.tags || []), tag]
-      }
-    }))
-  }
-
-  const removeTag = (goalId: string, tagId: string) => {
-    setGoals(goals.map(goal => {
-      if (goal.id !== goalId) return goal
-      return {
-        ...goal,
-        tags: (goal.tags || []).filter(tag => tag.id !== tagId)
-      }
-    }))
-  }
 
   // Save goals to localStorage whenever they change
   useEffect(() => {
@@ -174,23 +146,6 @@ function App() {
             onUpdateSubTask={updateSubTask}
             onAddSubTask={addSubTask}
             onDeleteSubTask={deleteSubTask}
-            onAddTag={addTag}
-            onRemoveTag={removeTag}
-          />
-        ))}
-        {habits.map(habit => (
-          <HabitTracker
-            key={habit.id}
-            habit={habit}
-            onComplete={(date) => {
-              setHabits(habits.map(h => {
-                if (h.id !== habit.id) return h
-                return {
-                  ...h,
-                  completions: [...h.completions, date]
-                }
-              }))
-            }}
           />
         ))}
       </div>
