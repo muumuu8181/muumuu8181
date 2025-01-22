@@ -22,14 +22,26 @@ export const GoalCard: React.FC<GoalCardProps> = ({
 }) => {
   const [isEditing, setIsEditing] = React.useState(false)
   const [editingTaskId, setEditingTaskId] = React.useState<string | null>(null)
+  const [isEditingValue, setIsEditingValue] = React.useState(false)
+  const [tempValue, setTempValue] = React.useState(goal.currentValue)
+
+  React.useEffect(() => {
+    setTempValue(goal.currentValue)
+  }, [goal.currentValue])
 
   const handleUpdateTitle = (title: string) => {
     onUpdate(goal.id, { title })
     setIsEditing(false)
   }
 
-  const handleUpdateValue = (value: number) => {
-    onUpdate(goal.id, { currentValue: value })
+  const handleUpdateValue = () => {
+    onUpdate(goal.id, { currentValue: tempValue })
+    setIsEditingValue(false)
+  }
+
+  const handleCancelValueEdit = () => {
+    setTempValue(goal.currentValue)
+    setIsEditingValue(false)
   }
 
   const handleUpdateSubTask = (taskId: string, title: string) => {
@@ -75,13 +87,42 @@ export const GoalCard: React.FC<GoalCardProps> = ({
         <div className="space-y-4">
           <div>
             <label className="text-sm font-medium">現在の値</label>
-            <Input
-              type="number"
-              value={goal.currentValue}
-              onChange={(e) => handleUpdateValue(Number(e.target.value))}
-              className="mt-1"
-              min="0"
-            />
+            {isEditingValue ? (
+              <div className="flex gap-2 mt-1">
+                <Input
+                  type="number"
+                  value={tempValue}
+                  onChange={(e) => setTempValue(Number(e.target.value))}
+                  className="flex-1"
+                  min="0"
+                  autoFocus
+                />
+                <Button
+                  size="sm"
+                  onClick={handleUpdateValue}
+                  variant="outline"
+                >
+                  <Save className="w-4 h-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleCancelValueEdit}
+                  variant="ghost"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-lg font-medium">{goal.currentValue}</span>
+                <button
+                  onClick={() => setIsEditingValue(true)}
+                  className="p-1 hover:bg-gray-100 rounded"
+                >
+                  <Edit2 className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
           <div>
             <h3 className="text-sm font-medium mb-2">サブタスク</h3>
