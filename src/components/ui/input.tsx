@@ -4,6 +4,14 @@ import { cn } from "@/lib/utils"
 
 const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
   ({ className, type, ...props }, ref) => {
+    const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+      // Prevent keyboard from closing on mobile
+      e.preventDefault()
+      if (props.onBlur) {
+        props.onBlur(e)
+      }
+    }
+
     return (
       <input
         type={type}
@@ -12,8 +20,8 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
           className
         )}
         ref={ref}
+        onBlur={handleBlur}
         {...props}
-      />
     )
   }
 )
