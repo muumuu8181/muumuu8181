@@ -1,21 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card'
 import { Button } from './components/ui/button'
 import { Input } from './components/ui/input'
 import { Plus, Edit2, Plus as PlusIcon, Save, X } from 'lucide-react'
-
-interface SubTask {
-  id: string
-  title: string
-  completed: boolean
-}
-
-interface Goal {
-  id: string
-  title: string
-  currentValue: number
-  subTasks: SubTask[]
-}
+import { SubTask, Goal, TaskMetadata, Tag, Habit } from './types'
 
 function App() {
   const [goals, setGoals] = useState<Goal[]>([])
