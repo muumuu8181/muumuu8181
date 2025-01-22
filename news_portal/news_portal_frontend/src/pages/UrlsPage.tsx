@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "../components/ui/button";
+import { api } from "../utils/api";
 import { Input } from "../components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
@@ -15,6 +16,18 @@ interface UrlEntry {
 
 export default function UrlsPage() {
   const [urls, setUrls] = useState<UrlEntry[]>([]);
+
+  useEffect(() => {
+    const fetchUrls = async () => {
+      try {
+        const fetchedUrls = await api.getUrls();
+        setUrls(fetchedUrls);
+      } catch (error) {
+        console.error('Error fetching URLs:', error);
+      }
+    };
+    fetchUrls();
+  }, []);
 
   return (
     <div className="container mx-auto px-4 py-6">
