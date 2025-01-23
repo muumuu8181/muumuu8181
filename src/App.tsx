@@ -36,95 +36,35 @@ function App() {
   const updateSubTask = (goalId: string, taskId: string, updates: Partial<SubTask>) => {
     setGoals(goals.map(goal => {
       if (goal.id !== goalId) return goal
-
-      const updateSubTaskRecursive = (tasks: SubTask[]): SubTask[] => {
-        return tasks.map(task => {
-          if (task.id === taskId) {
-            return { ...task, ...updates }
-          }
-          if (task.subTasks) {
-            return {
-              ...task,
-              subTasks: updateSubTaskRecursive(task.subTasks)
-            }
-          }
-          return task
-        })
-      }
-
       return {
         ...goal,
-        subTasks: updateSubTaskRecursive(goal.subTasks)
+        subTasks: goal.subTasks.map(task =>
+          task.id === taskId ? { ...task, ...updates } : task
+        )
       }
     }))
   }
 
-  const addSubTask = (goalId: string, parentTaskId?: string) => {
+  const addSubTask = (goalId: string) => {
     const newTask: SubTask = {
       id: Date.now().toString(),
       title: '新しいサブタスク',
       completed: false
     }
 
-    setGoals(goals.map(goal => {
-      if (goal.id !== goalId) return goal
-
-      if (!parentTaskId) {
-        return {
-          ...goal,
-          subTasks: [...goal.subTasks, newTask]
-        }
-      }
-
-
-      const addSubTaskRecursive = (tasks: SubTask[]): SubTask[] => {
-        return tasks.map(task => {
-          if (task.id === parentTaskId) {
-            return {
-              ...task,
-              subTasks: [...(task.subTasks || []), newTask]
-            }
-          }
-          if (task.subTasks) {
-            return {
-              ...task,
-              subTasks: addSubTaskRecursive(task.subTasks)
-            }
-          }
-          return task
-        })
-      }
-
-      return {
-        ...goal,
-        subTasks: addSubTaskRecursive(goal.subTasks)
-      }
-    }))
+    setGoals(goals.map(goal =>
+      goal.id === goalId
+        ? { ...goal, subTasks: [...goal.subTasks, newTask] }
+        : goal
+    ))
   }
 
   const deleteSubTask = (goalId: string, taskId: string) => {
-    setGoals(goals.map(goal => {
-      if (goal.id !== goalId) return goal
-
-      const deleteSubTaskRecursive = (tasks: SubTask[]): SubTask[] => {
-        return tasks
-          .filter(task => task.id !== taskId)
-          .map(task => {
-            if (task.subTasks) {
-              return {
-                ...task,
-                subTasks: deleteSubTaskRecursive(task.subTasks)
-              }
-            }
-            return task
-          })
-      }
-
-      return {
-        ...goal,
-        subTasks: deleteSubTaskRecursive(goal.subTasks)
-      }
-    }))
+    setGoals(goals.map(goal =>
+      goal.id === goalId
+        ? { ...goal, subTasks: goal.subTasks.filter(task => task.id !== taskId) }
+        : goal
+    ))
   }
 
   return (
