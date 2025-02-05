@@ -2,8 +2,11 @@
 
 ## 📚 開発ドキュメント
 
-Devin向けの共通ガイドラインは以下のファイルを参照してください：
-- [DEVIN_GAS_GUIDELINES.md](./DEVIN_GAS_GUIDELINES.md)
+Devin向けの共通ガイドラインは以下の共有ディレクトリにあります：
+```
+~/.devin/docs/DEVIN_GAS_GUIDELINES.md
+```
+このガイドラインは全てのプロジェクトから参照可能です。
 
 本プロジェクト固有の設定と手順は以下のファイルに保存されています：
 
