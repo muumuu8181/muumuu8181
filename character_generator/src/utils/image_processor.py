@@ -14,10 +14,12 @@ class ImageProcessor:
     
     def preprocess_image(self, image_path):
         image = cv2.imread(image_path)
+        if image is None:
+            raise ValueError(f"Failed to load image: {image_path}")
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image = cv2.resize(image, self.image_size)
-        image = self.transform(image)
-        return image.unsqueeze(0)
+        image = self.transform(image).numpy()
+        return image
         
     def normalize(self, image_tensor):
         return torch.nn.functional.interpolate(

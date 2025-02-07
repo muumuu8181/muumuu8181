@@ -19,21 +19,12 @@ class CharacterGenerationPipeline:
     def process_image(self, image_path):
         # 1. 画像の読み込みと前処理
         image = self.image_processor.preprocess_image(image_path)
+        image_tensor = torch.from_numpy(image).unsqueeze(0)
         
-        # 2. 物体検出
-        bbox = self.object_detector.detect_object(image)
-        if bbox is None:
-            raise ValueError("No object detected in the image")
-            
-        # 3. 物体の切り出しと正規化
-        x1, y1, x2, y2 = bbox
-        object_image = image[:, :, y1:y2, x1:x2]
-        object_image = self.image_processor.normalize(object_image)
+        # 2. 特徴抽出（物体検出をスキップ）
+        features = self.feature_extractor(image_tensor)
         
-        # 4. 特徴抽出
-        features = self.feature_extractor(object_image)
-        
-        # 5. キャラクター属性と特技の生成
+        # 3. キャラクター属性と特技の生成
         attributes, skill = self.character_generator(features)
         
         return {
