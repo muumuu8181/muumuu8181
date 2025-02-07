@@ -27,11 +27,15 @@ class CharacterGenerationPipeline:
         features = features.view(features.size(0), -1)
         attributes, skill = self.character_generator(features)
         
+        # バッチの最初の要素を取得
+        attributes = attributes[0]  # バッチサイズ1なので最初の要素を取得
+        skill = skill[0]  # バッチサイズ1なので最初の要素を取得
+        
         return {
             'attributes': {
-                'hp': attributes[0].item(),
-                'attack': attributes[1].item(),
-                'defense': attributes[2].item()
+                'hp': float(attributes[0].item() * 100),  # 0-100のスケールに変換
+                'attack': float(attributes[1].item() * 100),
+                'defense': float(attributes[2].item() * 100)
             },
-            'skill': skill.item()
+            'skill': float(skill.item())
         }
