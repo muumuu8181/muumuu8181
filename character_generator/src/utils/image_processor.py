@@ -18,3 +18,11 @@ class ImageProcessor:
         image = cv2.resize(image, self.image_size)
         image = self.transform(image)
         return image.unsqueeze(0)
+        
+    def normalize(self, image_tensor):
+        return torch.nn.functional.interpolate(
+            image_tensor,
+            size=self.image_size,
+            mode='bilinear',
+            align_corners=False
+        )
