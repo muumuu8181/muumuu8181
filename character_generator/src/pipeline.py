@@ -21,10 +21,11 @@ class CharacterGenerationPipeline:
         image = self.image_processor.preprocess_image(image_path)
         image_tensor = torch.from_numpy(image).unsqueeze(0)
         
-        # 2. 特徴抽出（物体検出をスキップ）
+        # 2. 特徴抽出
         features = self.feature_extractor(image_tensor)
         
         # 3. キャラクター属性と特技の生成
+        features = features.view(features.size(0), -1)
         attributes, skill = self.character_generator(features)
         
         return {
