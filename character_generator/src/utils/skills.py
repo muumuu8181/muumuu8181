@@ -25,16 +25,17 @@ class Skill(Enum):
     BERSERK = 14      # 狂戦士化
     MEDITATION = 15    # 瞑想（MP回復）
 
-def get_top_skills(skill_probs: torch.Tensor, num_skills: int = 5) -> list[Skill]:
+def get_top_skills(skill_probs: list[float], num_skills: int = 5) -> list[Skill]:
     """確率の高い順に特技を選択する"""
-    # 確率の高い順にインデックスを取得
-    _, indices = torch.sort(skill_probs, descending=True)
+    # インデックスと確率のペアを作成
+    indexed_probs = list(enumerate(skill_probs))
+    # 確率の高い順にソート
+    sorted_probs = sorted(indexed_probs, key=lambda x: x[1], reverse=True)
     skills = []
     
     # 上位num_skills個の特技を選択
-    for idx in indices[:num_skills]:
-        skill_index = idx.item()
-        if skill_index < len(Skill):
-            skills.append(list(Skill)[skill_index])
+    for idx, _ in sorted_probs[:num_skills]:
+        if idx < len(Skill):
+            skills.append(list(Skill)[idx])
     
     return skills
