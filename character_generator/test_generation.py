@@ -1,12 +1,19 @@
-from src.pipeline import CharacterGenerationPipeline
-from src.utils.skills import get_skill_by_value
+import sys
+import os
+
+# モジュールパスの追加
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from character_generator.src.pipeline import CharacterGenerationPipeline
+from character_generator.src.utils.skills import get_skill_by_value
 
 def main():
     # パイプラインの初期化
     pipeline = CharacterGenerationPipeline()
     
     # テスト画像のパス
-    image_path = "data/test_images/test_character.png"
+    import os
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    image_path = os.path.join(base_dir, "character_generator", "data", "test_images", "test_character.png")
     
     try:
         # キャラクター生成
