@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torchvision.models import resnet50, ResNet50_Weights
 
 class FeatureExtractor(nn.Module):
@@ -14,7 +15,19 @@ class FeatureExtractor(nn.Module):
         # Ensure input is in the correct format (B, C, H, W)
         if len(x.shape) == 3:
             x = x.unsqueeze(0)  # Add batch dimension
-        x = self.features(x)
-        x = torch.flatten(x, 1)
-        x = self.fc(x)
+        
+        # Extract features using ResNet
+        with torch.no_grad():
+            x = self.features(x)
+            x = torch.flatten(x, 1)
+            
+            # Normalize features to ensure consistency
+            x = F.normalize(x, p=2, dim=1)
+            
+            # Project to lower dimension while preserving feature relationships
+            x = self.fc(x)
+            
+            # Additional normalization to ensure stable parameter generation
+            x = torch.tanh(x)
+        
         return x

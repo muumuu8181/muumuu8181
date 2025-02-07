@@ -4,7 +4,7 @@ import os
 # モジュールパスの追加
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from character_generator.src.pipeline import CharacterGenerationPipeline
-from character_generator.src.utils.skills import get_skill_by_value
+from character_generator.src.utils.skills import get_top_skills
 
 def main():
     # パイプラインの初期化
@@ -22,13 +22,24 @@ def main():
         # 結果の表示
         print("\nキャラクター生成結果:")
         print("-------------------")
-        print(f"HP: {result['attributes']['hp']:.1f}")
-        print(f"攻撃力: {result['attributes']['attack']:.1f}")
-        print(f"防御力: {result['attributes']['defense']:.1f}")
+        print("基本パラメータ:")
+        print(f"HP: {result['base']['hp']:.1f}")
+        print(f"MP: {result['base']['mp']:.1f}")
         
-        # 特技の取得と表示
-        skill = get_skill_by_value(result['skill'])
-        print(f"特技: {skill.name}")
+        print("\n戦闘パラメータ:")
+        print(f"攻撃力: {result['battle']['attack']:.1f}")
+        print(f"防御力: {result['battle']['defense']:.1f}")
+        print(f"素早さ: {result['battle']['speed']:.1f}")
+        
+        print("\n魔法パラメータ:")
+        print(f"魔力: {result['magic']['magic']:.1f}")
+        
+        print("\nその他:")
+        print(f"運: {result['other']['luck']:.1f}")
+        
+        print("\n特技:")
+        for skill in get_top_skills(result['skills']):
+            print(f"- {skill.name}")
         
     except Exception as e:
         print(f"エラーが発生しました: {str(e)}")
