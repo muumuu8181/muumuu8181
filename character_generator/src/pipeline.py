@@ -18,8 +18,7 @@ class CharacterGenerationPipeline:
     @torch.no_grad()
     def process_image(self, image_path):
         # 1. 画像の読み込みと前処理
-        image = self.image_processor.preprocess_image(image_path)
-        image_tensor = torch.from_numpy(image).unsqueeze(0)
+        image_tensor = self.image_processor.preprocess_image(image_path)
         
         # 2. 特徴抽出
         features = self.feature_extractor(image_tensor)

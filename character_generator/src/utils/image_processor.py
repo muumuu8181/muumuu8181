@@ -18,7 +18,7 @@ class ImageProcessor:
             raise ValueError(f"Failed to load image: {image_path}")
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image = cv2.resize(image, self.image_size)
-        image = self.transform(image).numpy()
+        image = self.transform(image)
         return image
         
     def normalize(self, image_tensor):
