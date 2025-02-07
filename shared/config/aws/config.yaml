@@ -1,0 +1,12 @@
+# AWS Configuration Template
+regions:
+  default: ap-northeast-1
+  allowed:
+    - ap-northeast-1
+    - ap-northeast-2
+
+services:
+  s3:
+    buckets:
+      - name: life-log-storage-1738814413
+        region: ap-northeast-1

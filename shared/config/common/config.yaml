@@ -1,0 +1,8 @@
+# Common Configuration
+environment: development
+project_root: /repos/muumuu8181
+shared_config_path: /shared/config
+
+# Default Settings
+default_region: ap-northeast-1
+default_language: ja
