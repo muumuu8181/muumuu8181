@@ -3,13 +3,25 @@ from src.utils.skills import Skill
 
 def generate_random_character(id: int):
     # 基本パラメータ（平均250程度）
-    hp = random.randint(4000, 10000)  # HP
-    mp = random.randint(200, 1000)    # MP
-    attack = random.randint(100, 1000) # 攻撃力
-    defense = random.randint(100, 1000) # 防御力
-    speed = random.randint(100, 1000)  # 素早さ
-    magic = random.randint(100, 1000)  # 魔力
-    luck = random.randint(100, 1000)   # 運
+    # 基本値を250として、±100の範囲でランダムに生成
+    base_value = 250
+    variation = 100
+    
+    hp = random.randint(5000, 10000)  # HP（最大10000）
+    mp = base_value + random.randint(-variation, variation)
+    attack = base_value + random.randint(-variation, variation)
+    defense = base_value + random.randint(-variation, variation)
+    speed = base_value + random.randint(-variation, variation)
+    magic = base_value + random.randint(-variation, variation)
+    luck = base_value + random.randint(-variation, variation)
+    
+    # 1000を超える値は1000に制限
+    mp = min(mp, 1000)
+    attack = min(attack, 1000)
+    defense = min(defense, 1000)
+    speed = min(speed, 1000)
+    magic = min(magic, 1000)
+    luck = min(luck, 1000)
     
     # ランダムに5つの特技を選択
     available_skills = list(Skill)
