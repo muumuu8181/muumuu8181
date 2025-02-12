@@ -13,7 +13,7 @@ app = FastAPI()
 # Disable CORS. Do not remove this for full-stack development.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
+    allow_origins=["https://news-scraping-app-63a2iyf9.devinapps.com"],  # Allow only our frontend
     allow_credentials=True,
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers
