@@ -81,11 +81,27 @@ async def analyze_image(file: UploadFile):
         )
     
     # Read and validate the image file
-    image = await read_image_file(file)
-        chunk_size = 8192  # 8KB chunks
-        chunks = []
+    try:
+        contents = await file.read()
+        if len(contents) > MAX_IMAGE_SIZE:
+            logger.log("ERROR", "file_too_large", 
+                      filename=file.filename, 
+                      size=len(contents))
+            raise HTTPException(
+                status_code=400,
+                detail=f"画像サイズは{MAX_IMAGE_SIZE/1024/1024}MB以下にしてください"
+            )
         
-        while True:
+        try:
+            image = Image.open(io.BytesIO(contents))
+        except Exception as e:
+            logger.log("ERROR", "invalid_image", 
+                      filename=file.filename, 
+                      error=str(e))
+            raise HTTPException(
+                status_code=400,
+                detail="無効な画像ファイルです"
+            )
             chunk = await file.read(chunk_size)
             if not chunk:
                 break
