@@ -48,15 +48,27 @@ async def analyze_image(file: UploadFile):
         )
     
     try:
-        contents = await file.read()
-        if len(contents) > MAX_IMAGE_SIZE:
-            logger.log("ERROR", "file_too_large", 
-                      filename=file.filename, 
-                      size=len(contents))
-            raise HTTPException(
-                status_code=400,
-                detail=f"画像サイズは{MAX_IMAGE_SIZE/1024/1024}MB以下にしてください"
-            )
+        # Check file size before reading entire contents
+        file_size = 0
+        chunk_size = 8192  # 8KB chunks
+        chunks = []
+        
+        while True:
+            chunk = await file.read(chunk_size)
+            if not chunk:
+                break
+            file_size += len(chunk)
+            if file_size > MAX_IMAGE_SIZE:
+                logger.log("ERROR", "file_too_large", 
+                          filename=file.filename, 
+                          size=file_size)
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"画像サイズは{MAX_IMAGE_SIZE/1024/1024}MB以下にしてください"
+                )
+            chunks.append(chunk)
+        
+        contents = b''.join(chunks)
         
         image = Image.open(io.BytesIO(contents))
         predictions = recognition_service.predict(image)
