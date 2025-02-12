@@ -47,6 +47,17 @@ async def analyze_image(file: UploadFile):
             detail="画像ファイルのみアップロード可能です"
         )
     
+    # Check file size using content length header
+    content_length = file.size
+    if content_length and content_length > MAX_IMAGE_SIZE:
+        logger.log("ERROR", "file_too_large", 
+                  filename=file.filename, 
+                  size=content_length)
+        raise HTTPException(
+            status_code=400,
+            detail=f"画像サイズは{MAX_IMAGE_SIZE/1024/1024}MB以下にしてください"
+        )
+    
     try:
         # Check file size before reading entire contents
         file_size = 0
