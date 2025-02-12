@@ -6,11 +6,22 @@ from app.main import app
 
 client = TestClient(app)
 
-def create_test_image(size=(100, 100), color=(255, 255, 255), quality=100):
+def create_test_image(size=(100, 100), color=(255, 255, 255), quality=100, add_noise=False):
     """テスト用の画像を作成"""
+    import random
     image = Image.new('RGB', size, color)
+    
+    if add_noise:
+        # Add random noise to prevent good compression
+        pixels = image.load()
+        for i in range(size[0]):
+            for j in range(size[1]):
+                r = random.randint(0, 255)
+                g = random.randint(0, 255)
+                b = random.randint(0, 255)
+                pixels[i, j] = (r, g, b)
+    
     img_byte_arr = io.BytesIO()
-    # Use JPEG with high quality to ensure large file size
     image.save(img_byte_arr, format='JPEG', quality=quality)
     img_byte_arr.seek(0)
     return img_byte_arr
