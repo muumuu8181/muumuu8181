@@ -51,10 +51,13 @@ def test_analyze_image_invalid_file_type():
 def test_analyze_image_file_too_large():
     """ファイルサイズ超過のテスト"""
     # 大きなサイズの画像を作成 (>10MB)
-    large_image = create_test_image(size=(20000, 20000), quality=100)
+    # Create a smaller image but with random noise to ensure large file size
+    large_image = create_test_image(size=(2000, 2000), quality=100, add_noise=True)
     large_image_data = large_image.getvalue()
+    # Duplicate the data to exceed 10MB
+    large_image_data = large_image_data * 10
     print(f"Test image size: {len(large_image_data)} bytes")
-    files = {"file": ("large.jpg", large_image, "image/jpeg")}
+    files = {"file": ("large.jpg", io.BytesIO(large_image_data), "image/jpeg")}
     
     response = client.post("/api/v1/analyze-image", files=files)
     assert response.status_code == 400

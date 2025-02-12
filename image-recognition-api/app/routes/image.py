@@ -49,16 +49,19 @@ async def analyze_image(file: UploadFile):
     
     try:
         contents = await file.read()
-        if len(contents) > MAX_IMAGE_SIZE:
+        file_size = len(contents)
+        if file_size > MAX_IMAGE_SIZE:
             logger.log("ERROR", "file_too_large", 
                       filename=file.filename, 
-                      size=len(contents))
+                      size=file_size)
             raise HTTPException(
                 status_code=400,
                 detail=f"画像サイズは{MAX_IMAGE_SIZE/1024/1024}MB以下にしてください"
             )
         
         try:
+            # Disable DecompressionBomb warnings for our controlled environment
+            Image.MAX_IMAGE_PIXELS = None
             image = Image.open(io.BytesIO(contents))
             predictions = recognition_service.predict(image)
             
