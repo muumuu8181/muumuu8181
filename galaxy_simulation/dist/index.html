@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>銀河衝突シミュレーション</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas size
+        function resizeCanvas() {
+            canvas.width = Math.min(1000, window.innerWidth - 20);
+            canvas.height = Math.min(800, window.innerHeight - 20);
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Constants
+        const NUM_PARTICLES = 300;
+        const G = 0.05;
+        const TIME_STEP = 1;
+
+        class Particle {
+            constructor(x, y, mass, vx, vy) {
+                this.x = x;
+                this.y = y;
+                this.mass = mass;
+                this.vx = vx;
+                this.vy = vy;
+                this.ax = 0;
+                this.ay = 0;
+            }
+
+            update(particles) {
+                this.ax = 0;
+                this.ay = 0;
+                for (const other of particles) {
+                    if (other === this) continue;
+                    const dx = other.x - this.x;
+                    const dy = other.y - this.y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 5) dist = 5;
+                    const force = G * this.mass * other.mass / (dist * dist);
+                    this.ax += force * dx / (dist * this.mass);
+                    this.ay += force * dy / (dist * this.mass);
+                }
+                this.vx += this.ax * TIME_STEP;
+                this.vy += this.ay * TIME_STEP;
+            }
+
+            move() {
+                this.x += this.vx * TIME_STEP;
+                this.y += this.vy * TIME_STEP;
+                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+            }
+
+            draw() {
+                const radius = Math.max(2, this.mass / 5);
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, radius, 0, Math.PI * 2);
+                ctx.fillStyle = 'white';
+                ctx.fill();
+            }
+        }
+
+        // Create particles
+        const particles = [];
+        for (let cluster = 0; cluster < 2; cluster++) {
+            const cx = canvas.width * (cluster === 0 ? 0.3 : 0.7);
+            const cy = canvas.height / 2;
+            const vx_center = cluster === 0 ? 1 : -1;
+            const vy_center = 0;
+
+            for (let i = 0; i < NUM_PARTICLES / 2; i++) {
+                const x = cx + (Math.random() * 60 - 30);
+                const y = cy + (Math.random() * 60 - 30);
+                const mass = Math.random() * 10 + 5;
+                const vx = vx_center + (Math.random() * 2 - 1);
+                const vy = vy_center + (Math.random() * 2 - 1);
+                particles.push(new Particle(x, y, mass, vx, vy));
+            }
+        }
+
+        function animate() {
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (const p of particles) {
+                p.update(particles);
+            }
+            for (const p of particles) {
+                p.move();
+                p.draw();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
