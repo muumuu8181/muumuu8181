@@ -40,9 +40,15 @@ def fetch_google_news() -> List[News]:
                 # For now, we'll use a default category
                 category = "General"
                 
+                # Extract content preview if available
+                content = ""
+                content_elem = article.find('div', {'class': 'xBbh9'})
+                if content_elem:
+                    content = content_elem.text.strip()
+                
                 news_items.append(News(
                     title=title,
-                    content="",  # We'll fetch full content later if needed
+                    content=content,
                     url=url,
                     source=source,
                     category=category,
