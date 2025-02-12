@@ -83,3 +83,16 @@ async def get_news(
 async def get_categories():
     """Get available news categories"""
     return {"categories": categories}
+
+@app.get("/api/news/text")
+async def get_news_text(
+    from_date: Optional[datetime] = None,
+    to_date: Optional[datetime] = None,
+    category: Optional[str] = None,
+) -> str:
+    """Get news as plain text for easy copying"""
+    news_items = news_store.get_news(from_date, to_date, category)
+    text_output = []
+    for news in news_items:
+        text_output.append(f"【{news.category}】{news.title}\n{news.url}\n")
+    return "\n".join(text_output)
