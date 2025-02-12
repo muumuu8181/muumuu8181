@@ -94,5 +94,5 @@ async def get_news_text(
     news_items = news_store.get_news(from_date, to_date, category)
     text_output = []
     for news in news_items:
-        text_output.append(f"【{news.category}】{news.title}\n{news.url}\n")
+        text_output.append(f"【{news.category}】{news.title}\n{news.content}\n{news.url}\n")
     return "\n".join(text_output)
