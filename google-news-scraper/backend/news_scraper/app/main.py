@@ -19,23 +19,21 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-# In-memory storage
-news_storage: List[News] = []
-categories = ["General", "World", "Business", "Technology", "Entertainment", "Sports", "Science", "Health"]
-
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Initialize storage
+news_store = NewsStorage()
+categories = ["General", "World", "Business", "Technology", "Entertainment", "Sports", "Science", "Health"]
+
 def update_news():
     """Background task to fetch and update news"""
     try:
-        global news_storage
         new_items = fetch_google_news()
         if new_items:
-            # Keep only last 1000 items to manage memory
-            news_storage = (new_items + news_storage)[:1000]
-            logger.info(f"Successfully fetched {len(new_items)} news items")
+            new_count = news_store.save_news(new_items)
+            logger.info(f"Successfully fetched and saved {new_count} new news items")
     except NewsScraperError as e:
         logger.error(f"Failed to update news: {str(e)}")
 
@@ -63,21 +61,11 @@ async def get_news(
     from_date: Optional[datetime] = None,
     to_date: Optional[datetime] = None,
     category: Optional[str] = None,
-    source: Optional[str] = None,
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100)
 ) -> dict:
-    """Get news with filtering and pagination"""
-    filtered_news = news_storage.copy()
-    
-    if from_date:
-        filtered_news = [n for n in filtered_news if n.published_at >= from_date]
-    if to_date:
-        filtered_news = [n for n in filtered_news if n.published_at <= to_date]
-    if category:
-        filtered_news = [n for n in filtered_news if n.category.lower() == category.lower()]
-    if source:
-        filtered_news = [n for n in filtered_news if n.source.lower() == source.lower()]
+    """Get news with filtering"""
+    filtered_news = news_store.get_news(from_date, to_date, category)
     
     # Calculate pagination
     start_idx = (page - 1) * limit
