@@ -6,11 +6,12 @@ from app.main import app
 
 client = TestClient(app)
 
-def create_test_image(size=(100, 100), color=(255, 255, 255)):
+def create_test_image(size=(100, 100), color=(255, 255, 255), quality=100):
     """テスト用の画像を作成"""
     image = Image.new('RGB', size, color)
     img_byte_arr = io.BytesIO()
-    image.save(img_byte_arr, format='PNG')
+    # Use JPEG with high quality to ensure large file size
+    image.save(img_byte_arr, format='JPEG', quality=quality)
     img_byte_arr.seek(0)
     return img_byte_arr
 
@@ -49,9 +50,11 @@ def test_analyze_image_invalid_file_type():
 
 def test_analyze_image_file_too_large():
     """ファイルサイズ超過のテスト"""
-    # 11MBの画像を作成
-    large_image = create_test_image(size=(3300, 3300))
-    files = {"file": ("large.png", large_image, "image/png")}
+    # 大きなサイズの画像を作成 (約11MB)
+    large_image = create_test_image(size=(5000, 5000), quality=100)
+    large_image_data = large_image.getvalue()
+    print(f"Test image size: {len(large_image_data)} bytes")
+    files = {"file": ("large.jpg", large_image, "image/jpeg")}
     
     response = client.post("/api/v1/analyze-image", files=files)
     assert response.status_code == 400
