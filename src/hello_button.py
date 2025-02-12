@@ -1,7 +1,6 @@
 import time
 import os
 import tempfile
-import pyautogui
 from PIL import ImageGrab
 
 def take_screenshot():
