@@ -158,8 +158,11 @@
                 const [left1, right1, y1] = points_layers[i];
                 const [left2, right2, y2] = points_layers[i + 1];
                 const d_avg = ((1 - i/(N-1)) + (1 - (i+1)/(N-1))) / 2;
-                const blue = Math.floor(200 * d_avg + 55);
-                ctx.fillStyle = `rgb(0,0,${blue})`;
+                // 色にサイン波による動的な変化を追加
+                const r = Math.floor(50 + 50 * Math.sin(t + d_avg * 3));
+                const g = Math.floor(100 + 50 * Math.sin(t + d_avg * 2));
+                const b = Math.floor(200 + 55 * Math.sin(t + d_avg * 4));
+                ctx.fillStyle = `rgb(${r},${g},${b})`;
                 ctx.beginPath();
                 ctx.moveTo(left1 + offsetX, y1 + offsetY);
                 ctx.lineTo(left2 + offsetX, y2 + offsetY);
@@ -174,21 +177,26 @@
         function drawDNA(ctx, offsetX, offsetY, t) {
             const centerX = PANEL_WIDTH / 2;
             const centerY = PANEL_HEIGHT / 2;
-            const viewerDistance = 400;
-            const R = PANEL_WIDTH * 0.15;
+            const viewerDistance = 600;  // 遠近効果を抑え、画面内に収める
+            const R = PANEL_WIDTH * 0.12;  // 基本のらせん半径（小さめに設定）
             const numPoints = 100;
             const helix1 = [];
             const helix2 = [];
-            const tOffset = t * 2;
+            // DNA用の時間はゆったりさせる
+            const t_dna = t * 0.5;
 
             for (let i = 0; i < numPoints; i++) {
-                const u = (i / (numPoints - 1)) * (4 * Math.PI) - 2 * Math.PI + tOffset;
-                const z = u * 50;
-                const p1 = [R * Math.cos(u), R * Math.sin(u), z];
-                const p2 = [R * Math.cos(u + Math.PI), R * Math.sin(u + Math.PI), z];
+                const u_val = (i / (numPoints - 1)) * (4 * Math.PI) - 2 * Math.PI + t_dna;
+                // 半径にゆっくりとした歪みを加える
+                const R_mod = R + 15 * Math.sin(t * 0.3 + u_val);
+                // z軸は u_val に比例させつつ、常に正となるようオフセットを追加
+                const z = 20 * u_val + 150;
+                const p1 = [R_mod * Math.cos(u_val), R_mod * Math.sin(u_val), z];
+                const p2 = [R_mod * Math.cos(u_val + Math.PI), R_mod * Math.sin(u_val + Math.PI), z];
 
-                const theta = t * 0.5;
-                const phi = t * 0.3;
+                // ゆったりと回転するよう回転角度を設定
+                const theta = t * 0.2;
+                const phi = t * 0.1;
 
                 function rotatePoint(p, theta, phi) {
                     let [x, y, z] = p;
