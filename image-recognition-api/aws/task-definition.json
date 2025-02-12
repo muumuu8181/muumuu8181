@@ -4,8 +4,8 @@
         {
             "name": "api",
             "image": "${ECR_REPOSITORY}:latest",
-            "memory": 2048,
-            "cpu": 1024,
+            "memory": 4096,
+            "cpu": 2048,
             "essential": true,
             "portMappings": [
                 {
@@ -27,12 +27,23 @@
                     "value": "microsoft/resnet-50"
                 }
             ],
+            "healthCheck": {
+                "command": [
+                    "CMD-SHELL",
+                    "curl -f http://localhost:8000/healthz || exit 1"
+                ],
+                "interval": 30,
+                "timeout": 5,
+                "retries": 3,
+                "startPeriod": 60
+            },
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
                     "awslogs-group": "/ecs/image-recognition-api",
                     "awslogs-region": "ap-northeast-1",
-                    "awslogs-stream-prefix": "ecs"
+                    "awslogs-stream-prefix": "ecs",
+                    "awslogs-create-group": "true"
                 }
             }
         }
@@ -41,8 +52,18 @@
         "FARGATE"
     ],
     "networkMode": "awsvpc",
-    "cpu": "1024",
-    "memory": "2048",
+    "cpu": "2048",
+    "memory": "4096",
     "executionRoleArn": "${ECS_EXECUTION_ROLE_ARN}",
-    "taskRoleArn": "${ECS_TASK_ROLE_ARN}"
+    "taskRoleArn": "${ECS_TASK_ROLE_ARN}",
+    "tags": [
+        {
+            "key": "Environment",
+            "value": "Production"
+        },
+        {
+            "key": "Application",
+            "value": "ImageRecognitionAPI"
+        }
+    ]
 }
