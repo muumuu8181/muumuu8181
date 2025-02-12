@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>複合宇宙シミュレーション</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // キャンバスサイズの設定
+        function resizeCanvas() {
+            const aspectRatio = 1400/800;
+            const maxWidth = window.innerWidth - 20;
+            const maxHeight = window.innerHeight - 20;
+            
+            if (maxWidth / maxHeight > aspectRatio) {
+                canvas.height = maxHeight;
+                canvas.width = maxHeight * aspectRatio;
+            } else {
+                canvas.width = maxWidth;
+                canvas.height = maxWidth / aspectRatio;
+            }
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // 定数
+        const GALAXY_WIDTH = canvas.width / 2;
+        const HEIGHT = canvas.height;
+        const NUM_GALAXY_PARTICLES = 300;
+        const NUM_COLORFUL_PARTICLES = 200;
+        const G = 0.05;
+
+        // 銀河粒子クラス
+        class GalaxyParticle {
+            constructor(x, y, mass, vx, vy) {
+                this.x = x;
+                this.y = y;
+                this.mass = mass;
+                this.vx = vx;
+                this.vy = vy;
+                this.ax = 0;
+                this.ay = 0;
+            }
+
+            update(particles) {
+                this.ax = 0;
+                this.ay = 0;
+                for (const other of particles) {
+                    if (other === this) continue;
+                    const dx = other.x - this.x;
+                    const dy = other.y - this.y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 5) dist = 5;
+                    const force = G * this.mass * other.mass / (dist * dist);
+                    this.ax += force * dx / (dist * this.mass);
+                    this.ay += force * dy / (dist * this.mass);
+                }
+                this.vx += this.ax;
+                this.vy += this.ay;
+            }
+
+            move() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < 0 || this.x > GALAXY_WIDTH) this.vx *= -1;
+                if (this.y < 0 || this.y > HEIGHT) this.vy *= -1;
+            }
+
+            draw() {
+                const radius = Math.max(2, this.mass / 5);
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, radius, 0, Math.PI * 2);
+                ctx.fillStyle = 'white';
+                ctx.fill();
+            }
+        }
+
+        // カラフル粒子クラス
+        class ColorfulParticle {
+            constructor() {
+                this.base_x = GALAXY_WIDTH + Math.random() * GALAXY_WIDTH;
+                this.base_y = Math.random() * HEIGHT;
+                this.amp_x = Math.random() * 80 + 20;
+                this.amp_y = Math.random() * 80 + 20;
+                this.phase_x = Math.random() * Math.PI * 2;
+                this.phase_y = Math.random() * Math.PI * 2;
+                this.phase_r = Math.random() * Math.PI * 2;
+                this.phase_g = Math.random() * Math.PI * 2;
+                this.phase_b = Math.random() * Math.PI * 2;
+                this.dphase_x = Math.random() * 0.04 + 0.01;
+                this.dphase_y = Math.random() * 0.04 + 0.01;
+                this.dphase_r = Math.random() * 0.04 + 0.01;
+                this.dphase_g = Math.random() * 0.04 + 0.01;
+                this.dphase_b = Math.random() * 0.04 + 0.01;
+                this.size = Math.random() * 5 + 3;
+            }
+
+            update() {
+                this.phase_x += this.dphase_x;
+                this.phase_y += this.dphase_y;
+                this.phase_r += this.dphase_r;
+                this.phase_g += this.dphase_g;
+                this.phase_b += this.dphase_b;
+            }
+
+            draw() {
+                const x = this.base_x + this.amp_x * Math.sin(this.phase_x);
+                const y = this.base_y + this.amp_y * Math.cos(this.phase_y);
+                const r = Math.floor(127.5 * (1 + Math.sin(this.phase_r)));
+                const g = Math.floor(127.5 * (1 + Math.sin(this.phase_g)));
+                const b = Math.floor(127.5 * (1 + Math.sin(this.phase_b)));
+                ctx.beginPath();
+                ctx.arc(x, y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgb(${r},${g},${b})`;
+                ctx.fill();
+            }
+        }
+
+        // 粒子の生成
+        const galaxyParticles = [];
+        for (let cluster = 0; cluster < 2; cluster++) {
+            const cx = GALAXY_WIDTH * (cluster === 0 ? 0.3 : 0.7);
+            const cy = HEIGHT / 2;
+            const vx_center = cluster === 0 ? 1 : -1;
+            const vy_center = 0;
+
+            for (let i = 0; i < NUM_GALAXY_PARTICLES / 2; i++) {
+                const x = cx + (Math.random() * 60 - 30);
+                const y = cy + (Math.random() * 60 - 30);
+                const mass = Math.random() * 10 + 5;
+                const vx = vx_center + (Math.random() * 2 - 1);
+                const vy = vy_center + (Math.random() * 2 - 1);
+                galaxyParticles.push(new GalaxyParticle(x, y, mass, vx, vy));
+            }
+        }
+
+        const colorfulParticles = Array.from(
+            { length: NUM_COLORFUL_PARTICLES },
+            () => new ColorfulParticle()
+        );
+
+        // 中央の区切り線を描画
+        function drawDivider() {
+            ctx.beginPath();
+            ctx.moveTo(GALAXY_WIDTH, 0);
+            ctx.lineTo(GALAXY_WIDTH, HEIGHT);
+            ctx.strokeStyle = '#333';
+            ctx.stroke();
+        }
+
+        function animate() {
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 銀河シミュレーションの更新と描画
+            for (const p of galaxyParticles) {
+                p.update(galaxyParticles);
+            }
+            for (const p of galaxyParticles) {
+                p.move();
+                p.draw();
+            }
+
+            // カラフルアニメーションの更新と描画
+            for (const p of colorfulParticles) {
+                p.update();
+                p.draw();
+            }
+
+            // 区切り線を描画
+            drawDivider();
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
