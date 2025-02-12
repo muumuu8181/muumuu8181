@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>4分割シミュレーション</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // キャンバスサイズの設定
+        function resizeCanvas() {
+            const aspectRatio = 1400/1600;
+            const maxWidth = window.innerWidth - 20;
+            const maxHeight = window.innerHeight - 20;
+            
+            if (maxWidth / maxHeight > aspectRatio) {
+                canvas.height = maxHeight;
+                canvas.width = maxHeight * aspectRatio;
+            } else {
+                canvas.width = maxWidth;
+                canvas.height = maxWidth / aspectRatio;
+            }
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // パネルサイズの設定
+        const PANEL_WIDTH = canvas.width / 2;
+        const PANEL_HEIGHT = canvas.height / 2;
+
+        // 定数
+        const NUM_GALAXY_PARTICLES = 300;
+        const NUM_COLORFUL_PARTICLES = 200;
+        const G = 0.05;
+
+        // 銀河粒子クラス
+        class GalaxyParticle {
+            constructor(x, y, mass, vx, vy) {
+                this.x = x;
+                this.y = y;
+                this.mass = mass;
+                this.vx = vx;
+                this.vy = vy;
+                this.ax = 0;
+                this.ay = 0;
+            }
+
+            update(particles) {
+                this.ax = 0;
+                this.ay = 0;
+                for (const other of particles) {
+                    if (other === this) continue;
+                    const dx = other.x - this.x;
+                    const dy = other.y - this.y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 5) dist = 5;
+                    const force = G * this.mass * other.mass / (dist * dist);
+                    this.ax += force * dx / (dist * this.mass);
+                    this.ay += force * dy / (dist * this.mass);
+                }
+                this.vx += this.ax;
+                this.vy += this.ay;
+            }
+
+            move() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < 0 || this.x > PANEL_WIDTH) this.vx *= -1;
+                if (this.y < 0 || this.y > PANEL_HEIGHT) this.vy *= -1;
+            }
+
+            draw(ctx, offsetX = 0, offsetY = 0) {
+                const radius = Math.max(2, this.mass / 5);
+                ctx.beginPath();
+                ctx.arc(this.x + offsetX, this.y + offsetY, radius, 0, Math.PI * 2);
+                ctx.fillStyle = 'white';
+                ctx.fill();
+            }
+        }
+
+        // カラフル粒子クラス
+        class ColorfulParticle {
+            constructor() {
+                this.base_x = Math.random() * PANEL_WIDTH;
+                this.base_y = Math.random() * PANEL_HEIGHT;
+                this.amp_x = Math.random() * 80 + 20;
+                this.amp_y = Math.random() * 80 + 20;
+                this.phase_x = Math.random() * Math.PI * 2;
+                this.phase_y = Math.random() * Math.PI * 2;
+                this.phase_r = Math.random() * Math.PI * 2;
+                this.phase_g = Math.random() * Math.PI * 2;
+                this.phase_b = Math.random() * Math.PI * 2;
+                this.dphase_x = Math.random() * 0.04 + 0.01;
+                this.dphase_y = Math.random() * 0.04 + 0.01;
+                this.dphase_r = Math.random() * 0.04 + 0.01;
+                this.dphase_g = Math.random() * 0.04 + 0.01;
+                this.dphase_b = Math.random() * 0.04 + 0.01;
+                this.size = Math.random() * 5 + 3;
+            }
+
+            update() {
+                this.phase_x += this.dphase_x;
+                this.phase_y += this.dphase_y;
+                this.phase_r += this.dphase_r;
+                this.phase_g += this.dphase_g;
+                this.phase_b += this.dphase_b;
+            }
+
+            draw(ctx, offsetX = 0, offsetY = 0) {
+                const x = this.base_x + this.amp_x * Math.sin(this.phase_x);
+                const y = this.base_y + this.amp_y * Math.cos(this.phase_y);
+                const r = Math.floor(127.5 * (1 + Math.sin(this.phase_r)));
+                const g = Math.floor(127.5 * (1 + Math.sin(this.phase_g)));
+                const b = Math.floor(127.5 * (1 + Math.sin(this.phase_b)));
+                ctx.beginPath();
+                ctx.arc(x + offsetX, y + offsetY, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgb(${r},${g},${b})`;
+                ctx.fill();
+            }
+        }
+
+        // 3D川（リバー）描画関数
+        function drawWater(ctx, offsetX, offsetY, t) {
+            const N = 30;
+            const nearWidth = PANEL_WIDTH * 0.4;
+            const farWidth = PANEL_WIDTH * 0.07;
+            const waveAmplitude = PANEL_WIDTH * 0.15;
+            const points_layers = [];
+
+            for (let i = 0; i < N; i++) {
+                const d = 1 - (i / (N - 1));
+                const y = d * PANEL_HEIGHT;
+                const center = PANEL_WIDTH / 2 + waveAmplitude * Math.sin(t + d * 5);
+                const riverWidth = farWidth + (nearWidth - farWidth) * d;
+                const left = center - riverWidth / 2;
+                const right = center + riverWidth / 2;
+                points_layers.push([left, right, y]);
+            }
+
+            for (let i = 0; i < points_layers.length - 1; i++) {
+                const [left1, right1, y1] = points_layers[i];
+                const [left2, right2, y2] = points_layers[i + 1];
+                const d_avg = ((1 - i/(N-1)) + (1 - (i+1)/(N-1))) / 2;
+                // 色にサイン波による動的な変化を追加
+                const r = Math.floor(50 + 50 * Math.sin(t + d_avg * 3));
+                const g = Math.floor(100 + 50 * Math.sin(t + d_avg * 2));
+                const b = Math.floor(200 + 55 * Math.sin(t + d_avg * 4));
+                ctx.fillStyle = `rgb(${r},${g},${b})`;
+                ctx.beginPath();
+                ctx.moveTo(left1 + offsetX, y1 + offsetY);
+                ctx.lineTo(left2 + offsetX, y2 + offsetY);
+                ctx.lineTo(right2 + offsetX, y2 + offsetY);
+                ctx.lineTo(right1 + offsetX, y1 + offsetY);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+
+        // DNAらせん描画関数
+        function drawDNA(ctx, offsetX, offsetY, t) {
+            const centerX = PANEL_WIDTH / 2;
+            const centerY = PANEL_HEIGHT / 2;
+            const viewerDistance = 600;  // 遠近効果を抑え、画面内に収める
+            const R = PANEL_WIDTH * 0.12;  // 基本のらせん半径（小さめに設定）
+            const numPoints = 100;
+            const helix1 = [];
+            const helix2 = [];
+            // DNA用の時間はゆったりさせる
+            const t_dna = t * 0.5;
+
+            for (let i = 0; i < numPoints; i++) {
+                const u_val = (i / (numPoints - 1)) * (4 * Math.PI) - 2 * Math.PI + t_dna;
+                // 半径にゆっくりとした歪みを加える
+                const R_mod = R + 15 * Math.sin(t * 0.3 + u_val);
+                // z軸は u_val に比例させつつ、常に正となるようオフセットを追加
+                const z = 20 * u_val + 150;
+                const p1 = [R_mod * Math.cos(u_val), R_mod * Math.sin(u_val), z];
+                const p2 = [R_mod * Math.cos(u_val + Math.PI), R_mod * Math.sin(u_val + Math.PI), z];
+
+                // ゆったりと回転するよう回転角度を設定
+                const theta = t * 0.2;
+                const phi = t * 0.1;
+
+                function rotatePoint(p, theta, phi) {
+                    let [x, y, z] = p;
+                    const x1 = x * Math.cos(theta) + z * Math.sin(theta);
+                    const y1 = y;
+                    const z1 = -x * Math.sin(theta) + z * Math.cos(theta);
+                    const x2 = x1;
+                    const y2 = y1 * Math.cos(phi) - z1 * Math.sin(phi);
+                    const z2 = y1 * Math.sin(phi) + z1 * Math.cos(phi);
+                    return [x2, y2, z2];
+                }
+
+                const p1r = rotatePoint(p1, theta, phi);
+                const p2r = rotatePoint(p2, theta, phi);
+
+                function projectPoint(p) {
+                    const [x, y, z] = p;
+                    const factor = viewerDistance / (z + viewerDistance);
+                    return [x * factor + centerX, y * factor + centerY];
+                }
+
+                helix1.push(projectPoint(p1r));
+                helix2.push(projectPoint(p2r));
+            }
+
+            // らせんの描画
+            ctx.strokeStyle = 'red';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            helix1.forEach(([x, y], i) => {
+                if (i === 0) ctx.moveTo(x + offsetX, y + offsetY);
+                else ctx.lineTo(x + offsetX, y + offsetY);
+            });
+            ctx.stroke();
+
+            ctx.strokeStyle = 'green';
+            ctx.beginPath();
+            helix2.forEach(([x, y], i) => {
+                if (i === 0) ctx.moveTo(x + offsetX, y + offsetY);
+                else ctx.lineTo(x + offsetX, y + offsetY);
+            });
+            ctx.stroke();
+
+            // はしご部分の描画
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            for (let i = 0; i < numPoints; i += 5) {
+                const [x1, y1] = helix1[i];
+                const [x2, y2] = helix2[i];
+                ctx.beginPath();
+                ctx.moveTo(x1 + offsetX, y1 + offsetY);
+                ctx.lineTo(x2 + offsetX, y2 + offsetY);
+                ctx.stroke();
+            }
+        }
+
+        // 粒子の生成
+        const galaxyParticles = [];
+        for (let cluster = 0; cluster < 2; cluster++) {
+            const cx = PANEL_WIDTH * (cluster === 0 ? 0.3 : 0.7);
+            const cy = PANEL_HEIGHT / 2;
+            const vx_center = cluster === 0 ? 1 : -1;
+            const vy_center = 0;
+
+            for (let i = 0; i < NUM_GALAXY_PARTICLES / 2; i++) {
+                const x = cx + (Math.random() * 60 - 30);
+                const y = cy + (Math.random() * 60 - 30);
+                const mass = Math.random() * 10 + 5;
+                const vx = vx_center + (Math.random() * 2 - 1);
+                const vy = vy_center + (Math.random() * 2 - 1);
+                galaxyParticles.push(new GalaxyParticle(x, y, mass, vx, vy));
+            }
+        }
+
+        const colorfulParticles = Array.from(
+            { length: NUM_COLORFUL_PARTICLES },
+            () => new ColorfulParticle()
+        );
+
+        let t = 0;
+        function animate() {
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 銀河シミュレーションの更新と描画（左上）
+            for (const p of galaxyParticles) {
+                p.update(galaxyParticles);
+            }
+            for (const p of galaxyParticles) {
+                p.move();
+                p.draw(ctx);
+            }
+
+            // カラフルアニメーションの更新と描画（右上）
+            for (const p of colorfulParticles) {
+                p.update();
+                p.draw(ctx, PANEL_WIDTH, 0);
+            }
+
+            // 3D川の描画（左下）
+            drawWater(ctx, 0, PANEL_HEIGHT, t);
+
+            // DNAらせんの描画（右下）
+            drawDNA(ctx, PANEL_WIDTH, PANEL_HEIGHT, t);
+
+            // パネル区切り線の描画
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(PANEL_WIDTH, 0);
+            ctx.lineTo(PANEL_WIDTH, canvas.height);
+            ctx.moveTo(0, PANEL_HEIGHT);
+            ctx.lineTo(canvas.width, PANEL_HEIGHT);
+            ctx.stroke();
+
+            t += 0.05;
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
