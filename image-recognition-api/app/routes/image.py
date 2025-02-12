@@ -59,6 +59,14 @@ async def analyze_image(file: UploadFile):
             )
         # Reset file position for later use
         file._file = io.BytesIO(contents)
+    except Exception as e:
+        logger.log("ERROR", "file_read_error", 
+                  filename=file.filename, 
+                  error=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail="ファイルの読み込み中にエラーが発生しました"
+        )
     
     try:
         # Check file size before reading entire contents
