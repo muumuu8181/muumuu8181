@@ -23,7 +23,9 @@ def display_in_devin(filename):
     """デヴィンのインターフェースに画像を表示"""
     if filename and os.path.exists(filename):
         print(f"Displaying screenshot: {filename}")
-        # ここでデヴィンのメッセージ送信コマンドを使用
+        message = f"新しいスクリーンショットを取得しました。"
+        # デヴィンのメッセージ送信コマンドを使用して画像を表示
+        print(f"<message_user attachments='{filename}'>{message}</message_user>")
         return True
     return False
 
