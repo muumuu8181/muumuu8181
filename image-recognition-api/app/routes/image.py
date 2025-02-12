@@ -60,83 +60,32 @@ async def analyze_image(file: UploadFile):
         
         try:
             image = Image.open(io.BytesIO(contents))
-            return image
-        except Exception as e:
-            logger.log("ERROR", "invalid_image", 
+            predictions = recognition_service.predict(image)
+            
+            results = [
+                {
+                    "object": OBJECT_TRANSLATIONS.get(pred[0], pred[0]),
+                    "confidence": f"{pred[1]:.1%}"
+                }
+                for pred in predictions[:5]  # 上位5件のみ返す
+            ]
+            
+            logger.log("INFO", "image_analysis_completed", 
                       filename=file.filename, 
-                      error=str(e))
-            raise HTTPException(
-                status_code=400,
-                detail="無効な画像ファイルです"
-            )
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.log("ERROR", "file_read_error", 
-                  filename=file.filename, 
-                  error=str(e))
-        raise HTTPException(
-            status_code=500,
-            detail="ファイルの読み込み中にエラーが発生しました"
-        )
-    
-    # Read and validate the image file
-    try:
-        contents = await file.read()
-        if len(contents) > MAX_IMAGE_SIZE:
-            logger.log("ERROR", "file_too_large", 
-                      filename=file.filename, 
-                      size=len(contents))
-            raise HTTPException(
-                status_code=400,
-                detail=f"画像サイズは{MAX_IMAGE_SIZE/1024/1024}MB以下にしてください"
-            )
-        
-        try:
-            image = Image.open(io.BytesIO(contents))
-        except Exception as e:
-            logger.log("ERROR", "invalid_image", 
-                      filename=file.filename, 
-                      error=str(e))
-            raise HTTPException(
-                status_code=400,
-                detail="無効な画像ファイルです"
-            )
-            chunk = await file.read(chunk_size)
-            if not chunk:
-                break
-            file_size += len(chunk)
-            if file_size > MAX_IMAGE_SIZE:
-                logger.log("ERROR", "file_too_large", 
-                          filename=file.filename, 
-                          size=file_size)
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"画像サイズは{MAX_IMAGE_SIZE/1024/1024}MB以下にしてください"
-                )
-            chunks.append(chunk)
-        
-        contents = b''.join(chunks)
-        
-        image = Image.open(io.BytesIO(contents))
-        predictions = recognition_service.predict(image)
-        
-        results = [
-            {
-                "object": OBJECT_TRANSLATIONS.get(pred[0], pred[0]),
-                "confidence": f"{pred[1]:.1%}"
+                      results=results)
+            
+            return {
+                "results": results
             }
-            for pred in predictions[:5]  # 上位5件のみ返す
-        ]
-        
-        logger.log("INFO", "image_analysis_completed", 
-                  filename=file.filename, 
-                  results=results)
-        
-        return {
-            "results": results
-        }
-        
+            
+        except Exception as e:
+            logger.log("ERROR", "invalid_image", 
+                      filename=file.filename, 
+                      error=str(e))
+            raise HTTPException(
+                status_code=400,
+                detail="無効な画像ファイルです"
+            )
     except HTTPException:
         raise
     except Exception as e:
