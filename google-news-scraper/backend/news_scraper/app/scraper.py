@@ -32,14 +32,26 @@ def fetch_google_news() -> List[News]:
                 
                 # Parse description HTML to extract content and related articles
                 soup = BeautifulSoup(description, 'html.parser')
-                # Get first article's content (main article)
-                first_article = soup.find('a')
-                content = first_article.text.strip() if first_article else ""
+                # Get all articles from description
+                articles = []
+                for article_elem in soup.find_all('a'):
+                    article_title = article_elem.text.strip()
+                    article_source = article_elem.find_next('font', {'color': '#6f6f6f'})
+                    source_text = article_source.text if article_source else source
+                    articles.append(f"{article_title} ({source_text})")
+
+                # Combine articles into content
+                content = "\n".join([
+                    "Main Article:",
+                    articles[0],
+                    "\nRelated Articles:",
+                    *articles[1:]
+                ]) if articles else ""
                 
-                # Get source if available from description
-                source_elem = soup.find('font', {'color': '#6f6f6f'})
-                if source_elem:
-                    source = source_elem.text
+                # Get source from first article
+                first_source = soup.find('font', {'color': '#6f6f6f'})
+                if first_source:
+                    source = first_source.text
                 
                 # Parse publication date
                 try:
