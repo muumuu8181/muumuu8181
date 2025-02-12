@@ -5,7 +5,7 @@ from typing import List, Optional
 from apscheduler.schedulers.background import BackgroundScheduler
 import logging
 
-from .models import News
+from .models import News, NewsStorage
 from .scraper import fetch_google_news, NewsScraperError
 
 app = FastAPI()
