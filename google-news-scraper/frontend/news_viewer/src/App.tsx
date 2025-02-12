@@ -38,7 +38,7 @@ function App() {
       const params = new URLSearchParams({
         from_date: fromDate ? `${fromDate}T00:00:00` : '',
         to_date: toDate ? `${toDate}T23:59:59` : '',
-        ...(selectedCategory && { category: selectedCategory }),
+        ...(selectedCategory && selectedCategory !== 'all' && { category: selectedCategory }),
       })
 
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/news?${params}`)
@@ -96,7 +96,7 @@ function App() {
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Categories</SelectItem>
+              <SelectItem value="all">All Categories</SelectItem>
               {categories.map((category) => (
                 <SelectItem key={category} value={category}>
                   {category}
