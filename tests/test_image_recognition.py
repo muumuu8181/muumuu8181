@@ -1,0 +1,80 @@
+import pytest
+from fastapi.testclient import TestClient
+from PIL import Image
+import io
+from app.main import app
+
+client = TestClient(app)
+
+def create_test_image(size=(100, 100), color=(255, 255, 255), quality=100, add_noise=False):
+    """テスト用の画像を作成"""
+    import random
+    image = Image.new('RGB', size, color)
+    
+    if add_noise:
+        # Add random noise to prevent good compression
+        pixels = image.load()
+        for i in range(size[0]):
+            for j in range(size[1]):
+                r = random.randint(0, 255)
+                g = random.randint(0, 255)
+                b = random.randint(0, 255)
+                pixels[i, j] = (r, g, b)
+    
+    img_byte_arr = io.BytesIO()
+    image.save(img_byte_arr, format='JPEG', quality=quality)
+    img_byte_arr.seek(0)
+    return img_byte_arr
+
+def test_healthz():
+    """ヘルスチェックエンドポイントのテスト"""
+    response = client.get("/healthz")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+def test_analyze_image_success():
+    """画像分析の正常系テスト"""
+    img_bytes = create_test_image()
+    files = {"file": ("test.png", img_bytes, "image/png")}
+    
+    response = client.post("/api/v1/analyze-image", files=files)
+    assert response.status_code == 200
+    
+    data = response.json()
+    assert "results" in data
+    assert isinstance(data["results"], list)
+    
+    if data["results"]:  # 結果が存在する場合
+        result = data["results"][0]
+        assert "object" in result
+        assert "confidence" in result
+        assert isinstance(result["confidence"], str)
+        assert result["confidence"].endswith("%")
+
+def test_analyze_image_invalid_file_type():
+    """不正なファイルタイプのテスト"""
+    files = {"file": ("test.txt", b"not an image", "text/plain")}
+    
+    response = client.post("/api/v1/analyze-image", files=files)
+    assert response.status_code == 400
+    assert response.json()["detail"] == "画像ファイルのみアップロード可能です"
+
+def test_analyze_image_file_too_large():
+    """ファイルサイズ超過のテスト"""
+    # 大きなサイズの画像を作成 (>10MB)
+    # Create a smaller image but with random noise to ensure large file size
+    large_image = create_test_image(size=(2000, 2000), quality=100, add_noise=True)
+    large_image_data = large_image.getvalue()
+    # Duplicate the data to exceed 10MB
+    large_image_data = large_image_data * 10
+    print(f"Test image size: {len(large_image_data)} bytes")
+    files = {"file": ("large.jpg", io.BytesIO(large_image_data), "image/jpeg")}
+    
+    response = client.post("/api/v1/analyze-image", files=files)
+    assert response.status_code == 400
+    assert "MB以下にしてください" in response.json()["detail"]
+
+def test_analyze_image_no_file():
+    """ファイル未指定のテスト"""
+    response = client.post("/api/v1/analyze-image")
+    assert response.status_code == 422  # FastAPIのバリデーションエラー
