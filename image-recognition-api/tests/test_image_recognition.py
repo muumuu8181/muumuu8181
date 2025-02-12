@@ -50,8 +50,8 @@ def test_analyze_image_invalid_file_type():
 
 def test_analyze_image_file_too_large():
     """ファイルサイズ超過のテスト"""
-    # 大きなサイズの画像を作成 (約11MB)
-    large_image = create_test_image(size=(10000, 10000), quality=100)
+    # 大きなサイズの画像を作成 (>10MB)
+    large_image = create_test_image(size=(20000, 20000), quality=100)
     large_image_data = large_image.getvalue()
     print(f"Test image size: {len(large_image_data)} bytes")
     files = {"file": ("large.jpg", large_image, "image/jpeg")}
