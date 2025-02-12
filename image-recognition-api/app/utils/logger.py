@@ -17,7 +17,7 @@ class StructuredLogger:
             correlation_id = str(uuid4())
             
         log_data = {
-            "timestamp": datetime.now(datetime.UTC).isoformat(),
+            "timestamp": datetime.now().astimezone().isoformat(),
             "level": level,
             "event": event,
             "correlation_id": correlation_id,
