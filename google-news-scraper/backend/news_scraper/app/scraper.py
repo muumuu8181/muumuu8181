@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 import requests
 from bs4 import BeautifulSoup
+import xml.etree.ElementTree as ET
 from typing import List
 from .models import News
 
@@ -12,50 +13,56 @@ class NewsScraperError(Exception):
 
 def fetch_google_news() -> List[News]:
     try:
-        response = requests.get("https://news.google.com")
+        url = "https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en"
+        response = requests.get(url)
         response.raise_for_status()
-        soup = BeautifulSoup(response.text, 'html.parser')
+        root = ET.fromstring(response.content)
         
         news_items = []
-        articles = soup.find_all('article')
+        items = root.findall(".//item")
         
-        for article in articles:
+        for item in items:
             try:
-                title_elem = article.find('a', {'tabindex': '0'})
-                if not title_elem:
-                    continue
-                    
-                title = title_elem.text.strip()
-                url = f"https://news.google.com{title_elem.get('href', '')[1:]}"
+                title = item.find("title").text.strip()
+                link = item.find("link").text.strip()
+                description = item.find("description").text
+                source_elem = item.find("source")
+                source = source_elem.text if source_elem is not None else "Unknown"
+                pub_date = item.find("pubDate").text
                 
-                # Get source and time
-                source = article.find('img', {'class': 'tvs3Id'})
-                source = source.get('alt', 'Unknown') if source else 'Unknown'
+                # Parse description HTML to extract content and related articles
+                soup = BeautifulSoup(description, 'html.parser')
+                # Get first article's content (main article)
+                first_article = soup.find('a')
+                content = first_article.text.strip() if first_article else ""
                 
-                time_elem = article.find('time')
-                published_text = time_elem.text if time_elem else ''
-                # Simple parsing of relative time
-                published_at = datetime.utcnow()  # Default to now, improve parsing later
+                # Get source if available from description
+                source_elem = soup.find('font', {'color': '#6f6f6f'})
+                if source_elem:
+                    source = source_elem.text
+                
+                # Parse publication date
+                try:
+                    published_at = datetime.strptime(pub_date, "%a, %d %b %Y %H:%M:%S GMT")
+                except ValueError:
+                    # Fallback to current time if parsing fails
+                    published_at = datetime.utcnow()
+                    logger.warning(f"Failed to parse date '{pub_date}', using current time")
                 
                 # For now, we'll use a default category
+                # TODO: Implement category detection based on content/keywords
                 category = "General"
-                
-                # Extract content preview if available
-                content = ""
-                content_elem = article.find('div', {'class': 'xBbh9'})
-                if content_elem:
-                    content = content_elem.text.strip()
                 
                 news_items.append(News(
                     title=title,
                     content=content,
-                    url=url,
+                    url=link,
                     source=source,
                     category=category,
                     published_at=published_at
                 ))
             except Exception as e:
-                logger.error(f"Error parsing article: {str(e)}")
+                logger.error(f"Error parsing RSS item: {str(e)}")
                 continue
                 
         return news_items
