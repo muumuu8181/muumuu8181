@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import psycopg
+from app.routes import image
 
-app = FastAPI()
+app = FastAPI(title="画像認識API")
 
 # Disable CORS. Do not remove this for full-stack development.
 app.add_middleware(
@@ -16,3 +16,6 @@ app.add_middleware(
 @app.get("/healthz")
 async def healthz():
     return {"status": "ok"}
+
+# ルーターの登録
+app.include_router(image.router, prefix="/api/v1")
