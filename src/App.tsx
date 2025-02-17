@@ -85,6 +85,24 @@ export default function App() {
   return (
     <div className="container max-w-md mx-auto p-4 space-y-4">
       <div className="flex flex-col gap-4">
+        <Button
+          variant="default"
+          className="w-full h-20 text-xl font-bold bg-green-500 hover:bg-green-600 text-white shadow-lg"
+          onClick={() => setShowGraph(!showGraph)}
+        >
+          {showGraph ? (
+            <>
+              <Scale className="mr-2 h-6 w-6" />
+              データ表示に戻る
+            </>
+          ) : (
+            <>
+              <LineChart className="mr-2 h-6 w-6" />
+              グラフで見る
+            </>
+          )}
+        </Button>
+
         <div className="flex gap-2">
           <Button
             variant={selectedType === 'food' ? "default" : "outline"}
@@ -103,24 +121,6 @@ export default function App() {
             飲み物
           </Button>
         </div>
-
-        <Button
-          variant="default"
-          className="w-full h-20 text-xl font-bold bg-green-500 hover:bg-green-600 text-white shadow-lg"
-          onClick={() => setShowGraph(!showGraph)}
-        >
-          {showGraph ? (
-            <>
-              <Scale className="mr-2 h-6 w-6" />
-              データ表示に戻る
-            </>
-          ) : (
-            <>
-              <LineChart className="mr-2 h-6 w-6" />
-              グラフで見る
-            </>
-          )}
-        </Button>
       </div>
 
       {showError && (
