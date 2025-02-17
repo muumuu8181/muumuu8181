@@ -271,35 +271,29 @@ export default function App() {
 
       <ScrollArea className="h-[300px]">
         <div className="space-y-2">
-          {todayLogs.map((log, index) => (
-            <Card key={index} className="p-4">
-              <div className="flex justify-between items-center">
-                <div>
-                  <div className="flex items-center gap-2">
-                    {log.type === 'food' ? (
-                      <UtensilsCrossed className="h-5 w-5" />
-                    ) : (
-                      <Coffee className="h-5 w-5" />
-                    )}
-                    <span className="text-lg">{log.item.name}</span>
-                  </div>
-                  <div className="text-sm text-gray-500">{log.time}</div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-lg">{log.item.amount}mg</span>
-                  <Button
-                    variant="destructive"
-                    className="h-10"
-                    onClick={() => {
-                      const newLogs = logs.filter((_, i) => i !== index);
-                      setLogs(newLogs);
-                      localStorage.setItem('logs', JSON.stringify(newLogs));
-                    }}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    この項目を削除
-                  </Button>
-                </div>
+          {[...todayLogs].reverse().map((log, index) => (
+            <Card key={index} className="p-3">
+              <div className="flex items-center gap-2">
+                {log.type === 'food' ? (
+                  <UtensilsCrossed className="h-5 w-5 flex-shrink-0" />
+                ) : (
+                  <Coffee className="h-5 w-5 flex-shrink-0" />
+                )}
+                <span className="text-lg flex-grow">{log.item.name}</span>
+                <span className="text-sm text-gray-500 whitespace-nowrap">{log.time}</span>
+                <span className="text-lg whitespace-nowrap ml-2">{log.item.amount}mg</span>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="h-8 px-2"
+                  onClick={() => {
+                    const newLogs = logs.filter((_, i) => i !== index);
+                    setLogs(newLogs);
+                    localStorage.setItem('logs', JSON.stringify(newLogs));
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             </Card>
           ))}
