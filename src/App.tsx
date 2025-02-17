@@ -128,7 +128,7 @@ export default function App() {
           {showGraph ? (
             <>
               <Scale className="mr-2 h-6 w-6" />
-              通常表示に戻る
+              データ表示に戻る
             </>
           ) : (
             <>
