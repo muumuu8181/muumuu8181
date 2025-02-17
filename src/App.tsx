@@ -24,7 +24,18 @@ interface Log {
   date: string
 }
 
+interface HealthData {
+  logs: Log[]
+  customFoodItems: string[]
+  customDrinkItems: string[]
+}
+
 export default function App() {
+  const [userId] = useState(() => {
+    const saved = localStorage.getItem('userId')
+    return saved || crypto.randomUUID()
+  })
+  const [syncStatus, setSyncStatus] = useState<'同期完了' | '同期中...' | '同期エラー'>('同期完了')
   const [logs, setLogs] = useState<Log[]>([])
   const [selectedType, setSelectedType] = useState<'food' | 'drink'>('food')
   const [showGraph, setShowGraph] = useState(false)
@@ -39,15 +50,82 @@ export default function App() {
     const saved = localStorage.getItem('customDrinkItems')
     return saved ? JSON.parse(saved) : []
   })
+  // Persist userId
   useEffect(() => {
-    const savedLogs = localStorage.getItem('logs')
-    const savedFoodItems = localStorage.getItem('customFoodItems')
-    const savedDrinkItems = localStorage.getItem('customDrinkItems')
-    
-    if (savedLogs) setLogs(JSON.parse(savedLogs))
-    if (savedFoodItems) setCustomFoodItems(JSON.parse(savedFoodItems))
-    if (savedDrinkItems) setCustomDrinkItems(JSON.parse(savedDrinkItems))
-  }, [])
+    localStorage.setItem('userId', userId)
+  }, [userId])
+
+  const syncToServer = async (data: HealthData) => {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/sync`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        userId,
+        operation: 'SYNC',
+        data: {
+          logs,
+          customFoodItems,
+          customDrinkItems
+        }
+      })
+    })
+    if (!response.ok) throw new Error('Sync failed')
+    return await response.json()
+  }
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setSyncStatus('同期中...')
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/sync`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, operation: 'GET' })
+        })
+        if (!response.ok) throw new Error('Failed to load data')
+        const data = await response.json()
+        if (data) {
+          setLogs(data.logs || [])
+          setCustomFoodItems(data.customFoodItems || [])
+          setCustomDrinkItems(data.customDrinkItems || [])
+        }
+        setSyncStatus('同期完了')
+      } catch (error) {
+        console.error('Load failed:', error)
+        setSyncStatus('同期エラー')
+        // Fallback to localStorage if server sync fails
+        const savedLogs = localStorage.getItem('logs')
+        const savedFoodItems = localStorage.getItem('customFoodItems')
+        const savedDrinkItems = localStorage.getItem('customDrinkItems')
+        
+        if (savedLogs) setLogs(JSON.parse(savedLogs))
+        if (savedFoodItems) setCustomFoodItems(JSON.parse(savedFoodItems))
+        if (savedDrinkItems) setCustomDrinkItems(JSON.parse(savedDrinkItems))
+      }
+    }
+
+    loadData()
+  }, [userId])
+
+  useEffect(() => {
+    const syncData = async () => {
+      try {
+        setSyncStatus('同期中...')
+        await syncToServer({
+          logs,
+          customFoodItems,
+          customDrinkItems
+        })
+        setSyncStatus('同期完了')
+      } catch (error) {
+        console.error('Sync failed:', error)
+        setSyncStatus('同期エラー')
+      }
+    }
+
+    const timer = setTimeout(syncData, 1000)
+    return () => clearTimeout(timer)
+  }, [logs, customFoodItems, customDrinkItems])
 
   useEffect(() => {
     localStorage.setItem('logs', JSON.stringify(logs))
@@ -275,19 +353,28 @@ export default function App() {
       <Card className="p-4">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold">本日の合計</h2>
-          <Button
-            variant="destructive"
-            className="h-12 text-lg"
-            onClick={() => {
-              const today = new Date().toISOString().split('T')[0];
-              const newLogs = logs.filter(log => log.date !== today);
-              setLogs(newLogs);
-              localStorage.setItem('logs', JSON.stringify(newLogs));
-            }}
-          >
-            <Trash2 className="mr-2 h-5 w-5" />
-            本日分を削除
-          </Button>
+          <div className="flex items-center gap-2">
+            <span className={`text-sm ${
+              syncStatus === '同期完了' ? 'text-green-500' :
+              syncStatus === '同期中...' ? 'text-blue-500' :
+              'text-red-500'
+            }`}>
+              {syncStatus}
+            </span>
+            <Button
+              variant="destructive"
+              className="h-12 text-lg"
+              onClick={() => {
+                const today = new Date().toISOString().split('T')[0];
+                const newLogs = logs.filter(log => log.date !== today);
+                setLogs(newLogs);
+                localStorage.setItem('logs', JSON.stringify(newLogs));
+              }}
+            >
+              <Trash2 className="mr-2 h-5 w-5" />
+              本日分を削除
+            </Button>
+          </div>
         </div>
         <div className="space-y-2 text-lg">
           <div className="flex justify-between">
