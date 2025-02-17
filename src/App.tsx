@@ -7,16 +7,11 @@ import {
   Coffee,
   Scale,
   Trash2,
-  AlertCircle,
   LineChart
 } from 'lucide-react'
 import { Graph } from './components/ui/graph'
 import { PeriodToggle } from './components/ui/period-toggle'
 import { aggregateData } from './lib/graph-utils'
-import {
-  Alert,
-  AlertDescription,
-} from "@/components/ui/alert"
 
 interface Log {
   item: {
@@ -34,9 +29,6 @@ export default function App() {
   const [showGraph, setShowGraph] = useState(false)
   const [period, setPeriod] = useState<'1' | '3' | '7' | '28'>('1')
   const [selectedItem, setSelectedItem] = useState<{name: string, amount: number} | null>(null)
-  const [showError, setShowError] = useState(false)
-  const [errorMessage, setErrorMessage] = useState("")
-
   useEffect(() => {
     const savedLogs = localStorage.getItem('logs')
     if (savedLogs) {
@@ -48,23 +40,17 @@ export default function App() {
     localStorage.setItem('logs', JSON.stringify(logs))
   }, [logs])
 
-  const todayLogs = logs.filter(log => log.date === new Date().toISOString().split('T')[0])
+  const today = new Date().toISOString().split('T')[0]
+  const todayLogs = logs.filter(log => log.date === today)
   const foodTotal = todayLogs.filter(log => log.type === 'food').reduce((sum, log) => sum + log.item.amount, 0)
   const drinkTotal = todayLogs.filter(log => log.type === 'drink').reduce((sum, log) => sum + log.item.amount, 0)
 
   const handleItemSelect = (name: string) => {
-    setShowError(false)
     setSelectedItem({ name, amount: 50 })
   }
 
   const handleAmountSelect = (amount: number) => {
     if (!selectedItem) return
-    
-    if (todayLogs.some(log => log.item.name === selectedItem.name)) {
-      setShowError(true)
-      setErrorMessage("この項目は既に追加されています")
-      return
-    }
 
     const now = new Date()
     const time = now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
@@ -77,7 +63,6 @@ export default function App() {
       date
     }])
     setSelectedItem(null)
-    setShowError(false)
   }
 
   const AMOUNT_OPTIONS = Array.from({ length: 16 }, (_, i) => (i + 1) * 50)
@@ -122,13 +107,6 @@ export default function App() {
           </Button>
         </div>
       </div>
-
-      {showError && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{errorMessage}</AlertDescription>
-        </Alert>
-      )}
 
       <div className="grid grid-cols-2 gap-2">
         {selectedType === 'food' ? (
