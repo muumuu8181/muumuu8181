@@ -122,8 +122,8 @@ export default function App() {
 
         <div className="flex gap-2">
           <Button
-            variant="outline"
-            className="w-full h-12 text-lg"
+            variant="default"
+            className="w-full h-16 text-lg"
             onClick={() => setShowGraph(!showGraph)}
           >
             {showGraph ? (
@@ -137,19 +137,6 @@ export default function App() {
                 グラフ表示
               </>
             )}
-          </Button>
-          <Button
-            variant="destructive"
-            className="w-full h-12 text-lg"
-            onClick={() => {
-              const today = new Date().toISOString().split('T')[0];
-              const newLogs = logs.filter(log => log.date !== today);
-              setLogs(newLogs);
-              localStorage.setItem('logs', JSON.stringify(newLogs));
-            }}
-          >
-            <Trash2 className="mr-2 h-6 w-6" />
-            本日分を削除
           </Button>
         </div>
       </div>
@@ -263,7 +250,22 @@ export default function App() {
 
 
       <Card className="p-4">
-        <h2 className="text-lg font-semibold mb-4">本日の合計</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold">本日の合計</h2>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => {
+              const today = new Date().toISOString().split('T')[0];
+              const newLogs = logs.filter(log => log.date !== today);
+              setLogs(newLogs);
+              localStorage.setItem('logs', JSON.stringify(newLogs));
+            }}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            本日分を削除
+          </Button>
+        </div>
         <div className="space-y-2 text-lg">
           <div className="flex justify-between">
             <span>食事:</span>
@@ -314,18 +316,19 @@ export default function App() {
                   </div>
                   <div className="text-sm text-gray-500">{log.time}</div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-4">
                   <span className="text-lg">{log.item.amount}mg</span>
                   <Button
-                    variant="ghost"
-                    size="icon"
+                    variant="destructive"
+                    size="sm"
                     onClick={() => {
                       const newLogs = logs.filter((_, i) => i !== index);
                       setLogs(newLogs);
                       localStorage.setItem('logs', JSON.stringify(newLogs));
                     }}
                   >
-                    <Trash2 className="h-5 w-5" />
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    削除
                   </Button>
                 </div>
               </div>
