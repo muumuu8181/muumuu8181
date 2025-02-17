@@ -120,25 +120,23 @@ export default function App() {
           </Button>
         </div>
 
-        <div className="flex gap-2">
-          <Button
-            variant="default"
-            className="w-full h-16 text-lg"
-            onClick={() => setShowGraph(!showGraph)}
-          >
-            {showGraph ? (
-              <>
-                <Scale className="mr-2 h-6 w-6" />
-                通常表示
-              </>
-            ) : (
-              <>
-                <LineChart className="mr-2 h-6 w-6" />
-                グラフ表示
-              </>
-            )}
-          </Button>
-        </div>
+        <Button
+          variant="default"
+          className="w-full h-16 text-lg font-semibold bg-blue-500 hover:bg-blue-600 text-white"
+          onClick={() => setShowGraph(!showGraph)}
+        >
+          {showGraph ? (
+            <>
+              <Scale className="mr-2 h-6 w-6" />
+              通常表示に戻る
+            </>
+          ) : (
+            <>
+              <LineChart className="mr-2 h-6 w-6" />
+              グラフで見る
+            </>
+          )}
+        </Button>
       </div>
 
       {showError && (
@@ -254,7 +252,7 @@ export default function App() {
           <h2 className="text-lg font-semibold">本日の合計</h2>
           <Button
             variant="destructive"
-            size="sm"
+            className="h-12 text-lg"
             onClick={() => {
               const today = new Date().toISOString().split('T')[0];
               const newLogs = logs.filter(log => log.date !== today);
@@ -262,7 +260,7 @@ export default function App() {
               localStorage.setItem('logs', JSON.stringify(newLogs));
             }}
           >
-            <Trash2 className="mr-2 h-4 w-4" />
+            <Trash2 className="mr-2 h-5 w-5" />
             本日分を削除
           </Button>
         </div>
@@ -320,7 +318,7 @@ export default function App() {
                   <span className="text-lg">{log.item.amount}mg</span>
                   <Button
                     variant="destructive"
-                    size="sm"
+                    className="h-10"
                     onClick={() => {
                       const newLogs = logs.filter((_, i) => i !== index);
                       setLogs(newLogs);
@@ -328,7 +326,7 @@ export default function App() {
                     }}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
-                    削除
+                    この項目を削除
                   </Button>
                 </div>
               </div>
