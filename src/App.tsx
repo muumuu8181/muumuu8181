@@ -122,7 +122,7 @@ export default function App() {
 
         <Button
           variant="default"
-          className="w-full h-16 text-lg font-semibold bg-blue-500 hover:bg-blue-600 text-white"
+          className="w-full h-20 text-xl font-bold bg-green-500 hover:bg-green-600 text-white shadow-lg"
           onClick={() => setShowGraph(!showGraph)}
         >
           {showGraph ? (
