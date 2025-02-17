@@ -161,6 +161,16 @@ export default function App() {
             >
               おかず
             </Button>
+            <Button
+              variant="outline"
+              className="h-14 text-lg col-span-2"
+              onClick={() => {
+                const name = prompt('新しい食事項目を入力してください');
+                if (name) handleItemSelect(name);
+              }}
+            >
+              + 新しい食事を追加
+            </Button>
           </>
         ) : (
           <>
@@ -191,6 +201,16 @@ export default function App() {
               onClick={() => handleItemSelect('スープ')}
             >
               スープ
+            </Button>
+            <Button
+              variant="outline"
+              className="h-14 text-lg col-span-2"
+              onClick={() => {
+                const name = prompt('新しい飲み物を入力してください');
+                if (name) handleItemSelect(name);
+              }}
+            >
+              + 新しい飲み物を追加
             </Button>
           </>
         )}
