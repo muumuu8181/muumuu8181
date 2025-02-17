@@ -10,13 +10,17 @@ interface LogEntry {
 
 export function aggregateData(logs: LogEntry[], period: '1' | '3' | '7' | '28') {
   const now = new Date()
+  now.setHours(23, 59, 59, 999)  // End of day
+  
   const startDate = new Date(now)
   startDate.setDate(now.getDate() - parseInt(period) + 1)
+  startDate.setHours(0, 0, 0, 0)  // Start of day
   
-  const filteredLogs = logs.filter(log => 
-    new Date(log.date) >= startDate && 
-    new Date(log.date) <= now
-  )
+  const filteredLogs = logs.filter(log => {
+    const logDate = new Date(log.date)
+    logDate.setHours(12, 0, 0, 0)  // Noon to avoid timezone issues
+    return logDate >= startDate && logDate <= now
+  })
 
   const hourLabels = Array.from({length: 24}, (_, i) => 
     `${i.toString().padStart(2, '0')}:00`
