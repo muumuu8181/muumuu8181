@@ -12,6 +12,7 @@ import {
 import { Graph } from './components/ui/graph'
 import { PeriodToggle } from './components/ui/period-toggle'
 import { aggregateData } from './lib/graph-utils'
+import AddItemDialog from './components/ui/add-item-dialog'
 
 interface Log {
   item: {
@@ -29,6 +30,7 @@ export default function App() {
   const [showGraph, setShowGraph] = useState(false)
   const [period, setPeriod] = useState<'1' | '3' | '7' | '28'>('1')
   const [selectedItem, setSelectedItem] = useState<{name: string, amount: number} | null>(null)
+  const [showAddDialog, setShowAddDialog] = useState(false)
   useEffect(() => {
     const savedLogs = localStorage.getItem('logs')
     if (savedLogs) {
@@ -88,24 +90,26 @@ export default function App() {
           )}
         </Button>
 
-        <div className="flex gap-2">
-          <Button
-            variant={selectedType === 'food' ? "default" : "outline"}
-            className="w-full h-16 text-lg"
-            onClick={() => setSelectedType('food')}
-          >
-            <UtensilsCrossed className="mr-2 h-6 w-6" />
-            食事
-          </Button>
-          <Button
-            variant={selectedType === 'drink' ? "default" : "outline"}
-            className="w-full h-16 text-lg"
-            onClick={() => setSelectedType('drink')}
-          >
-            <Coffee className="mr-2 h-6 w-6" />
-            飲み物
-          </Button>
-        </div>
+        <Card className="p-4">
+          <div className="flex gap-2">
+            <Button
+              variant="default"
+              className="w-full h-16 text-lg bg-blue-500 hover:bg-blue-600 text-white shadow-md"
+              onClick={() => setSelectedType('food')}
+            >
+              <UtensilsCrossed className="mr-2 h-6 w-6" />
+              食事
+            </Button>
+            <Button
+              variant="default"
+              className="w-full h-16 text-lg bg-blue-500 hover:bg-blue-600 text-white shadow-md"
+              onClick={() => setSelectedType('drink')}
+            >
+              <Coffee className="mr-2 h-6 w-6" />
+              飲み物
+            </Button>
+          </div>
+        </Card>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
@@ -142,10 +146,7 @@ export default function App() {
             <Button
               variant="outline"
               className="h-14 text-lg col-span-2"
-              onClick={() => {
-                const name = prompt('新しい食事項目を入力してください');
-                if (name) handleItemSelect(name);
-              }}
+              onClick={() => setShowAddDialog(true)}
             >
               + 新しい食事を追加
             </Button>
@@ -183,10 +184,7 @@ export default function App() {
             <Button
               variant="outline"
               className="h-14 text-lg col-span-2"
-              onClick={() => {
-                const name = prompt('新しい飲み物を入力してください');
-                if (name) handleItemSelect(name);
-              }}
+              onClick={() => setShowAddDialog(true)}
             >
               + 新しい飲み物を追加
             </Button>
@@ -266,6 +264,13 @@ export default function App() {
           </div>
         </Card>
       )}
+
+      <AddItemDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+        onSubmit={handleItemSelect}
+        type={selectedType}
+      />
 
       <ScrollArea className="h-[300px]">
         <div className="space-y-2">
