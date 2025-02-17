@@ -227,7 +227,22 @@ export default function App() {
       )}
 
       <Card className="p-4">
-        <h2 className="text-lg font-semibold mb-2">本日の合計</h2>
+        <div className="flex justify-between items-start mb-4">
+          <h2 className="text-lg font-semibold">本日の合計</h2>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => {
+              const today = new Date().toISOString().split('T')[0];
+              const newLogs = logs.filter(log => log.date !== today);
+              setLogs(newLogs);
+              localStorage.setItem('logs', JSON.stringify(newLogs));
+            }}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            本日分を削除
+          </Button>
+        </div>
         <div className="space-y-2 text-lg">
           <div className="flex justify-between">
             <span>食事:</span>
@@ -292,7 +307,11 @@ export default function App() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => handleDelete(index)}
+                    onClick={() => {
+                      const newLogs = logs.filter((_, i) => i !== index);
+                      setLogs(newLogs);
+                      localStorage.setItem('logs', JSON.stringify(newLogs));
+                    }}
                   >
                     <Trash2 className="h-5 w-5" />
                   </Button>
