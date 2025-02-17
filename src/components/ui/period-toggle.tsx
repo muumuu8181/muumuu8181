@@ -1,4 +1,4 @@
-import * as React from "react"
+// Period toggle component
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 
 interface PeriodToggleProps {

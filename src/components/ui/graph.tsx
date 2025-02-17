@@ -1,4 +1,4 @@
-import * as React from "react"
+// Graph component
 import { Line } from 'react-chartjs-2'
 import {
   Chart as ChartJS,
@@ -34,7 +34,7 @@ interface GraphProps {
   period: '1' | '3' | '7' | '28'
 }
 
-export function Graph({ data, period }: GraphProps) {
+export function Graph({ data }: GraphProps) {
   const options = {
     responsive: true,
     maintainAspectRatio: false,

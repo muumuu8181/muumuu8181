@@ -5,8 +5,6 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { 
   UtensilsCrossed, 
   Coffee,
-  Check,
-  Plus,
   Scale,
   Trash2,
   AlertCircle,
@@ -15,20 +13,6 @@ import {
 import { Graph } from './components/ui/graph'
 import { PeriodToggle } from './components/ui/period-toggle'
 import { aggregateData } from './lib/graph-utils'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import {
   Alert,
   AlertDescription,
@@ -92,10 +76,6 @@ export default function App() {
     setSelectedItem(null)
   }
 
-  const handleDelete = (index: number) => {
-    setLogs(prev => prev.filter((_, i) => i !== index))
-  }
-
   const AMOUNT_OPTIONS = Array.from({ length: 16 }, (_, i) => (i + 1) * 50)
 
   return (
@@ -146,84 +126,71 @@ export default function App() {
         </Alert>
       )}
 
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button className="w-full h-12 text-lg">
-            <Plus className="mr-2 h-6 w-6" />
-            {selectedType === 'food' ? '食事' : '飲み物'}を追加
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{selectedType === 'food' ? '食事' : '飲み物'}を選択</DialogTitle>
-          </DialogHeader>
-          <div className="grid grid-cols-2 gap-2">
-            {selectedType === 'food' ? (
-              <>
-                <Button
-                  variant="outline"
-                  className="h-14 text-lg"
-                  onClick={() => handleItemSelect('ご飯')}
-                >
-                  ご飯
-                </Button>
-                <Button
-                  variant="outline"
-                  className="h-14 text-lg"
-                  onClick={() => handleItemSelect('パン')}
-                >
-                  パン
-                </Button>
-                <Button
-                  variant="outline"
-                  className="h-14 text-lg"
-                  onClick={() => handleItemSelect('麺類')}
-                >
-                  麺類
-                </Button>
-                <Button
-                  variant="outline"
-                  className="h-14 text-lg"
-                  onClick={() => handleItemSelect('おかず')}
-                >
-                  おかず
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  variant="outline"
-                  className="h-14 text-lg"
-                  onClick={() => handleItemSelect('水')}
-                >
-                  水
-                </Button>
-                <Button
-                  variant="outline"
-                  className="h-14 text-lg"
-                  onClick={() => handleItemSelect('お茶')}
-                >
-                  お茶
-                </Button>
-                <Button
-                  variant="outline"
-                  className="h-14 text-lg"
-                  onClick={() => handleItemSelect('ジュース')}
-                >
-                  ジュース
-                </Button>
-                <Button
-                  variant="outline"
-                  className="h-14 text-lg"
-                  onClick={() => handleItemSelect('スープ')}
-                >
-                  スープ
-                </Button>
-              </>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <div className="grid grid-cols-2 gap-2">
+        {selectedType === 'food' ? (
+          <>
+            <Button
+              variant="outline"
+              className="h-14 text-lg"
+              onClick={() => handleItemSelect('ご飯')}
+            >
+              ご飯
+            </Button>
+            <Button
+              variant="outline"
+              className="h-14 text-lg"
+              onClick={() => handleItemSelect('パン')}
+            >
+              パン
+            </Button>
+            <Button
+              variant="outline"
+              className="h-14 text-lg"
+              onClick={() => handleItemSelect('麺類')}
+            >
+              麺類
+            </Button>
+            <Button
+              variant="outline"
+              className="h-14 text-lg"
+              onClick={() => handleItemSelect('おかず')}
+            >
+              おかず
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button
+              variant="outline"
+              className="h-14 text-lg"
+              onClick={() => handleItemSelect('水')}
+            >
+              水
+            </Button>
+            <Button
+              variant="outline"
+              className="h-14 text-lg"
+              onClick={() => handleItemSelect('お茶')}
+            >
+              お茶
+            </Button>
+            <Button
+              variant="outline"
+              className="h-14 text-lg"
+              onClick={() => handleItemSelect('ジュース')}
+            >
+              ジュース
+            </Button>
+            <Button
+              variant="outline"
+              className="h-14 text-lg"
+              onClick={() => handleItemSelect('スープ')}
+            >
+              スープ
+            </Button>
+          </>
+        )}
+      </div>
 
       {selectedItem?.name && (
         <div className="space-y-2">
