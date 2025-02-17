@@ -31,16 +31,35 @@ export default function App() {
   const [period, setPeriod] = useState<'1' | '3' | '7' | '28'>('1')
   const [selectedItem, setSelectedItem] = useState<{name: string, amount: number} | null>(null)
   const [showAddDialog, setShowAddDialog] = useState(false)
+  const [customFoodItems, setCustomFoodItems] = useState<string[]>(() => {
+    const saved = localStorage.getItem('customFoodItems')
+    return saved ? JSON.parse(saved) : []
+  })
+  const [customDrinkItems, setCustomDrinkItems] = useState<string[]>(() => {
+    const saved = localStorage.getItem('customDrinkItems')
+    return saved ? JSON.parse(saved) : []
+  })
   useEffect(() => {
     const savedLogs = localStorage.getItem('logs')
-    if (savedLogs) {
-      setLogs(JSON.parse(savedLogs))
-    }
+    const savedFoodItems = localStorage.getItem('customFoodItems')
+    const savedDrinkItems = localStorage.getItem('customDrinkItems')
+    
+    if (savedLogs) setLogs(JSON.parse(savedLogs))
+    if (savedFoodItems) setCustomFoodItems(JSON.parse(savedFoodItems))
+    if (savedDrinkItems) setCustomDrinkItems(JSON.parse(savedDrinkItems))
   }, [])
 
   useEffect(() => {
     localStorage.setItem('logs', JSON.stringify(logs))
   }, [logs])
+
+  useEffect(() => {
+    localStorage.setItem('customFoodItems', JSON.stringify(customFoodItems))
+  }, [customFoodItems])
+
+  useEffect(() => {
+    localStorage.setItem('customDrinkItems', JSON.stringify(customDrinkItems))
+  }, [customDrinkItems])
 
   const today = new Date().toISOString().split('T')[0]
   const todayLogs = logs.filter(log => log.date === today)
@@ -49,6 +68,25 @@ export default function App() {
 
   const handleItemSelect = (name: string) => {
     setSelectedItem({ name, amount: 50 })
+  }
+
+  const handleNewItemAdd = (name: string) => {
+    const trimmedName = name.trim()
+    if (!trimmedName) return
+
+    if (selectedType === 'food') {
+      if (!customFoodItems.includes(trimmedName)) {
+        const newItems = [...customFoodItems, trimmedName]
+        setCustomFoodItems(newItems)
+        handleItemSelect(trimmedName)
+      }
+    } else {
+      if (!customDrinkItems.includes(trimmedName)) {
+        const newItems = [...customDrinkItems, trimmedName]
+        setCustomDrinkItems(newItems)
+        handleItemSelect(trimmedName)
+      }
+    }
   }
 
   const handleAmountSelect = (amount: number) => {
@@ -143,6 +181,16 @@ export default function App() {
             >
               おかず
             </Button>
+            {customFoodItems.map((item) => (
+              <Button
+                key={item}
+                variant="outline"
+                className="h-14 text-lg"
+                onClick={() => handleItemSelect(item)}
+              >
+                {item}
+              </Button>
+            ))}
             <Button
               variant="outline"
               className="h-14 text-lg col-span-2"
@@ -181,6 +229,16 @@ export default function App() {
             >
               スープ
             </Button>
+            {customDrinkItems.map((item) => (
+              <Button
+                key={item}
+                variant="outline"
+                className="h-14 text-lg"
+                onClick={() => handleItemSelect(item)}
+              >
+                {item}
+              </Button>
+            ))}
             <Button
               variant="outline"
               className="h-14 text-lg col-span-2"
@@ -268,7 +326,7 @@ export default function App() {
       <AddItemDialog
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
-        onSubmit={handleItemSelect}
+        onSubmit={handleNewItemAdd}
         type={selectedType}
       />
 
