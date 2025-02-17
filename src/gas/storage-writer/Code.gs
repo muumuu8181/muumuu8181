@@ -1,6 +1,15 @@
+/**
+ * @OnlyCurrentDoc
+ */
+
 // Cloud Storage bucket configuration
-const BUCKET_NAME = 'matching-451003.appspot.com';
-const PROJECT_ID = 'matching-451003';
+function getBucketName() {
+  return PropertiesService.getScriptProperties().getProperty('BUCKET_NAME') || 'matching-451003.appspot.com';
+}
+
+function getProjectId() {
+  return PropertiesService.getScriptProperties().getProperty('PROJECT_ID') || 'matching-451003';
+}
 
 // Create the web interface
 function doGet() {
@@ -28,7 +37,7 @@ function writeToStorage() {
     };
     
     // Construct the upload URL
-    const uploadUrl = `https://storage.googleapis.com/upload/storage/v1/b/${BUCKET_NAME}/o?name=${fileName}`;
+    const uploadUrl = `https://storage.googleapis.com/upload/storage/v1/b/${getBucketName()}/o?name=${fileName}`;
     
     // Make the request to Cloud Storage
     const response = UrlFetchApp.fetch(uploadUrl, {
