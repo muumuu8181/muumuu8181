@@ -4,7 +4,7 @@
 
 // Cloud Storage bucket configuration
 function getBucketName() {
-  return PropertiesService.getScriptProperties().getProperty('BUCKET_NAME') || 'matching-451003.appspot.com';
+  return PropertiesService.getScriptProperties().getProperty('BUCKET_NAME') || 'matching-451003-storage';
 }
 
 function getProjectId() {
