@@ -53,16 +53,19 @@ export default function App() {
   const drinkTotal = todayLogs.filter(log => log.type === 'drink').reduce((sum, log) => sum + log.item.amount, 0)
 
   const handleItemSelect = (name: string) => {
-    if (todayLogs.some(log => log.item.name === name)) {
-      setShowError(true)
-      setErrorMessage("この項目は既に追加されています")
-      return
-    }
+    setShowError(false)
     setSelectedItem({ name, amount: 50 })
   }
 
   const handleAmountSelect = (amount: number) => {
     if (!selectedItem) return
+    
+    if (todayLogs.some(log => log.item.name === selectedItem.name)) {
+      setShowError(true)
+      setErrorMessage("この項目は既に追加されています")
+      return
+    }
+
     const now = new Date()
     const time = now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
     const date = now.toISOString().split('T')[0]
@@ -74,6 +77,7 @@ export default function App() {
       date
     }])
     setSelectedItem(null)
+    setShowError(false)
   }
 
   const AMOUNT_OPTIONS = Array.from({ length: 16 }, (_, i) => (i + 1) * 50)
