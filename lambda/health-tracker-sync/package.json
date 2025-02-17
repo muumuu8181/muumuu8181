@@ -1,0 +1,16 @@
+{
+  "name": "health-tracker-sync",
+  "version": "1.0.0",
+  "description": "Health tracker sync lambda function",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-cloudwatch-logs": "^3.749.0",
+    "@aws-sdk/client-dynamodb": "^3.749.0",
+    "aws-sdk": "^2.1692.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.147",
+    "@types/aws-sdk": "^0.0.42",
+    "typescript": "^5.7.3"
+  }
+}
