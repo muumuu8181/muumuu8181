@@ -1,365 +1,386 @@
-import { useState, useEffect } from 'react'
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { 
-  UtensilsCrossed, 
-  Coffee,
-  Scale,
-  Trash2,
-  LineChart
-} from 'lucide-react'
-import { Graph } from './components/ui/graph'
-import { PeriodToggle } from './components/ui/period-toggle'
-import { aggregateData } from './lib/graph-utils'
-import AddItemDialog from './components/ui/add-item-dialog'
+import { useState, useRef, useEffect } from "react";
+import "./App.css";
+import { SEND_TIMEOUT, UPLOAD_TIMEOUT, MAX_RETRIES, ERROR_MESSAGES } from "./constants";
 
-interface Log {
-  item: {
-    name: string
-    amount: number
-  }
-  type: 'food' | 'drink'
-  time: string
-  date: string
+const API_URL = import.meta.env.VITE_API_URL;
+interface Message {
+  id: string;
+  text: string;
+  timestamp: string;
 }
 
-export default function App() {
-  const [logs, setLogs] = useState<Log[]>([])
-  const [selectedType, setSelectedType] = useState<'food' | 'drink'>('food')
-  const [showGraph, setShowGraph] = useState(false)
-  const [period, setPeriod] = useState<'1' | '3' | '7' | '28'>('1')
-  const [selectedItem, setSelectedItem] = useState<{name: string, amount: number} | null>(null)
-  const [showAddDialog, setShowAddDialog] = useState(false)
-  const [customFoodItems, setCustomFoodItems] = useState<string[]>(() => {
-    const saved = localStorage.getItem('customFoodItems')
-    return saved ? JSON.parse(saved) : []
-  })
-  const [customDrinkItems, setCustomDrinkItems] = useState<string[]>(() => {
-    const saved = localStorage.getItem('customDrinkItems')
-    return saved ? JSON.parse(saved) : []
-  })
-  useEffect(() => {
-    const savedLogs = localStorage.getItem('logs')
-    const savedFoodItems = localStorage.getItem('customFoodItems')
-    const savedDrinkItems = localStorage.getItem('customDrinkItems')
-    
-    if (savedLogs) setLogs(JSON.parse(savedLogs))
-    if (savedFoodItems) setCustomFoodItems(JSON.parse(savedFoodItems))
-    if (savedDrinkItems) setCustomDrinkItems(JSON.parse(savedDrinkItems))
-  }, [])
+interface File {
+  id: string;
+  name: string;
+  size: string;
+  timestamp: string;
+}
 
-  useEffect(() => {
-    localStorage.setItem('logs', JSON.stringify(logs))
-  }, [logs])
+interface DashboardProps {
+  onLogout: () => void;
+  token: string | null;
+}
 
-  useEffect(() => {
-    localStorage.setItem('customFoodItems', JSON.stringify(customFoodItems))
-  }, [customFoodItems])
 
-  useEffect(() => {
-    localStorage.setItem('customDrinkItems', JSON.stringify(customDrinkItems))
-  }, [customDrinkItems])
 
-  const today = new Date().toISOString().split('T')[0]
-  const todayLogs = logs.filter(log => log.date === today)
-  const foodTotal = todayLogs.filter(log => log.type === 'food').reduce((sum, log) => sum + log.item.amount, 0)
-  const drinkTotal = todayLogs.filter(log => log.type === 'drink').reduce((sum, log) => sum + log.item.amount, 0)
+const Dashboard: React.FC<DashboardProps> = ({ onLogout, token }) => {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const handleItemSelect = (name: string) => {
-    setSelectedItem({ name, amount: 50 })
-  }
-
-  const handleNewItemAdd = (name: string) => {
-    const trimmedName = name.trim()
-    if (!trimmedName) return
-
-    if (selectedType === 'food') {
-      if (!customFoodItems.includes(trimmedName)) {
-        const newItems = [...customFoodItems, trimmedName]
-        setCustomFoodItems(newItems)
-        handleItemSelect(trimmedName)
-      }
-    } else {
-      if (!customDrinkItems.includes(trimmedName)) {
-        const newItems = [...customDrinkItems, trimmedName]
-        setCustomDrinkItems(newItems)
-        handleItemSelect(trimmedName)
-      }
+  const fetchMessages = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/messages`, {
+        mode: 'cors',
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+      if (!response.ok) throw new Error("メッセージの取得に失敗しました");
+      const data = await response.json();
+      setMessages(data);
+    } catch (err) {
+      console.error("Error fetching messages:", err);
+      setError("メッセージの取得に失敗しました");
     }
-  }
+  };
 
-  const handleAmountSelect = (amount: number) => {
-    if (!selectedItem) return
+  const fetchFiles = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/files`, {
+        mode: 'cors',
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+      if (!response.ok) throw new Error("ファイル一覧の取得に失敗しました");
+      const data = await response.json();
+      setFiles(data);
+    } catch (err) {
+      console.error("Error fetching files:", err);
+      setError("ファイル一覧の取得に失敗しました");
+    }
+  };
 
-    const now = new Date()
-    const time = now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
-    const date = now.toISOString().split('T')[0]
+  const handleSendMessage = async (retryCount = 0) => {
+    if (!newMessage.trim()) return;
     
-    setLogs(prev => [...prev, {
-      item: { name: selectedItem.name, amount },
-      type: selectedType,
-      time,
-      date
-    }])
-    setSelectedItem(null)
-  }
+    if (retryCount >= MAX_RETRIES) {
+      setError(ERROR_MESSAGES.maxRetries);
+      setIsLoading(false);
+      return;
+    }
 
-  const AMOUNT_OPTIONS = Array.from({ length: 16 }, (_, i) => (i + 1) * 50)
+    setIsLoading(true);
+    const timeoutId = setTimeout(() => {
+      setIsLoading(false);
+      setError(ERROR_MESSAGES.timeout);
+      handleSendMessage(retryCount + 1);
+    }, SEND_TIMEOUT);
+
+      try {
+        const formData = new FormData();
+        formData.append("text", newMessage);
+
+        const controller = new AbortController();
+        const response = await fetch(`${API_URL}/api/messages`, {
+          method: "POST",
+          body: formData,
+          signal: controller.signal,
+          mode: 'cors',
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+
+        if (!response.ok) throw new Error("メッセージの送信に失敗しました");
+        
+        const message = await response.json();
+        setMessages([message, ...messages]);
+        setNewMessage("");
+        setError("");
+        setSuccess("メッセージを送信しました");
+        setTimeout(() => setSuccess(""), 3000);
+      } catch (err) {
+        console.error("Error sending message:", err);
+        if (err instanceof TypeError && err.message.includes('fetch')) {
+          setError(ERROR_MESSAGES.network);
+        } else if (retryCount < MAX_RETRIES - 1) {
+          setError(`メッセージの送信に失敗しました。再試行中... (${retryCount + 1}/${MAX_RETRIES})`);
+        } else {
+          setError("メッセージの送信に失敗しました。もう一度お試しください。");
+        }
+      } finally {
+        clearTimeout(timeoutId);
+        setIsLoading(false);
+      }
+  };
+
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const uploadedFile = event.target.files?.[0];
+    if (uploadedFile) {
+      if (uploadedFile.size > 5 * 1024 * 1024) {
+        setError("ファイルサイズは5MB以下にしてください");
+        setSelectedFile(null);
+        return;
+      }
+      setSelectedFile({
+        id: "temp",
+        name: uploadedFile.name,
+        size: `${(uploadedFile.size / 1024 / 1024).toFixed(2)}MB`,
+        timestamp: new Date().toLocaleString()
+      });
+      setError("");
+    }
+  };
+
+  const handleFileUpload = async (retryCount = 0) => {
+    if (!selectedFile) return;
+    
+    if (retryCount >= MAX_RETRIES) {
+      setError(ERROR_MESSAGES.maxRetries);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    const timeoutId = setTimeout(() => {
+      setIsLoading(false);
+      setError(ERROR_MESSAGES.timeout);
+      handleFileUpload(retryCount + 1);
+    }, UPLOAD_TIMEOUT);
+
+    try {
+      const uploadedFile = fileInputRef.current?.files?.[0];
+      if (!uploadedFile) throw new Error("ファイルが選択されていません");
+
+      const formData = new FormData();
+      formData.append("file", uploadedFile);
+
+      const controller = new AbortController();
+      const response = await fetch(`${API_URL}/api/files`, {
+        method: "POST",
+        body: formData,
+        signal: controller.signal,
+        mode: 'cors',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) throw new Error("ファイルのアップロードに失敗しました");
+      
+      const fileInfo = await response.json();
+      setFiles([fileInfo, ...files]);
+      setSelectedFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      setError("");
+      setSuccess("ファイルをアップロードしました");
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err) {
+      console.error("Error uploading file:", err);
+      if (err instanceof TypeError && err.message.includes('fetch')) {
+        setError(ERROR_MESSAGES.network);
+      } else if (retryCount < MAX_RETRIES - 1) {
+        setError(`ファイルのアップロードに失敗しました。再試行中... (${retryCount + 1}/${MAX_RETRIES})`);
+      } else {
+        setError("ファイルのアップロードに失敗しました。もう一度お試しください。");
+      }
+    } finally {
+      clearTimeout(timeoutId);
+      setIsLoading(false);
+    }
+  };
+
+  const downloadFile = async (fileId: string, fileName: string) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/files/${fileId}`, {
+        mode: 'cors',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      if (!response.ok) throw new Error("ファイルのダウンロードに失敗しました");
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      setSuccess("ファイルをダウンロードしました");
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err) {
+      console.error("Error downloading file:", err);
+      setError("ファイルのダウンロードに失敗しました");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!token) {
+      setError("認証が必要です。ログインしてください。");
+      return;
+    }
+    
+    fetchMessages();
+    fetchFiles();
+  }, [token]);
 
   return (
-    <div className="container max-w-md mx-auto p-4 space-y-4">
-      <div className="flex flex-col gap-4">
-        <Button
-          variant="default"
-          className="w-full h-20 text-xl font-bold bg-green-500 hover:bg-green-600 text-white shadow-lg"
-          onClick={() => setShowGraph(!showGraph)}
-        >
-          {showGraph ? (
-            <>
-              <Scale className="mr-2 h-6 w-6" />
-              データ表示に戻る
-            </>
-          ) : (
-            <>
-              <LineChart className="mr-2 h-6 w-6" />
-              グラフで見る
-            </>
-          )}
-        </Button>
-
-        <Card className="p-4">
-          <div className="flex gap-2">
-            <Button
-              variant="default"
-              className="w-full h-16 text-lg bg-blue-500 hover:bg-blue-600 text-white shadow-md"
-              onClick={() => setSelectedType('food')}
-            >
-              <UtensilsCrossed className="mr-2 h-6 w-6" />
-              食事
-            </Button>
-            <Button
-              variant="default"
-              className="w-full h-16 text-lg bg-blue-500 hover:bg-blue-600 text-white shadow-md"
-              onClick={() => setSelectedType('drink')}
-            >
-              <Coffee className="mr-2 h-6 w-6" />
-              飲み物
-            </Button>
-          </div>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-2 gap-2">
-        {selectedType === 'food' ? (
-          <>
-            <Button
-              variant="outline"
-              className="h-14 text-lg"
-              onClick={() => handleItemSelect('ご飯')}
-            >
-              ご飯
-            </Button>
-            <Button
-              variant="outline"
-              className="h-14 text-lg"
-              onClick={() => handleItemSelect('パン')}
-            >
-              パン
-            </Button>
-            <Button
-              variant="outline"
-              className="h-14 text-lg"
-              onClick={() => handleItemSelect('麺類')}
-            >
-              麺類
-            </Button>
-            <Button
-              variant="outline"
-              className="h-14 text-lg"
-              onClick={() => handleItemSelect('おかず')}
-            >
-              おかず
-            </Button>
-            {customFoodItems.map((item) => (
-              <Button
-                key={item}
-                variant="outline"
-                className="h-14 text-lg"
-                onClick={() => handleItemSelect(item)}
-              >
-                {item}
-              </Button>
-            ))}
-            <Button
-              variant="outline"
-              className="h-14 text-lg col-span-2"
-              onClick={() => setShowAddDialog(true)}
-            >
-              + 新しい食事を追加
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button
-              variant="outline"
-              className="h-14 text-lg"
-              onClick={() => handleItemSelect('水')}
-            >
-              水
-            </Button>
-            <Button
-              variant="outline"
-              className="h-14 text-lg"
-              onClick={() => handleItemSelect('お茶')}
-            >
-              お茶
-            </Button>
-            <Button
-              variant="outline"
-              className="h-14 text-lg"
-              onClick={() => handleItemSelect('ジュース')}
-            >
-              ジュース
-            </Button>
-            <Button
-              variant="outline"
-              className="h-14 text-lg"
-              onClick={() => handleItemSelect('スープ')}
-            >
-              スープ
-            </Button>
-            {customDrinkItems.map((item) => (
-              <Button
-                key={item}
-                variant="outline"
-                className="h-14 text-lg"
-                onClick={() => handleItemSelect(item)}
-              >
-                {item}
-              </Button>
-            ))}
-            <Button
-              variant="outline"
-              className="h-14 text-lg col-span-2"
-              onClick={() => setShowAddDialog(true)}
-            >
-              + 新しい飲み物を追加
-            </Button>
-          </>
-        )}
-      </div>
-
-      {selectedItem?.name && (
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Scale className="h-6 w-6 flex-shrink-0" />
-            <span className="text-lg">摂取量:</span>
-          </div>
-          <div className="grid grid-cols-4 gap-2">
-            {AMOUNT_OPTIONS.map((amount) => (
-              <Button
-                key={amount}
-                variant={selectedItem.amount === amount ? "default" : "outline"}
-                className="h-14 text-lg w-full"
-                onClick={() => handleAmountSelect(amount)}
-              >
-                {amount}
-              </Button>
-            ))}
-          </div>
-        </div>
-      )}
-
-
-      <Card className="p-4">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">本日の合計</h2>
-          <Button
-            variant="destructive"
-            className="h-12 text-lg"
-            onClick={() => {
-              const today = new Date().toISOString().split('T')[0];
-              const newLogs = logs.filter(log => log.date !== today);
-              setLogs(newLogs);
-              localStorage.setItem('logs', JSON.stringify(newLogs));
-            }}
-          >
-            <Trash2 className="mr-2 h-5 w-5" />
-            本日分を削除
-          </Button>
-        </div>
-        <div className="space-y-2 text-lg">
-          <div className="flex justify-between">
-            <span>食事:</span>
-            <span>{foodTotal}mg</span>
-          </div>
-          <div className="flex justify-between">
-            <span>飲み物:</span>
-            <span>{drinkTotal}mg</span>
-          </div>
-          <div className="flex justify-between font-semibold border-t pt-2">
-            <span>総計:</span>
-            <span>{foodTotal + drinkTotal}mg</span>
-          </div>
-        </div>
-      </Card>
-
-      {showGraph && (
-        <Card className="p-4">
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold">グラフ表示</h2>
-              <PeriodToggle 
-                value={period} 
-                onValueChange={(value) => setPeriod(value as '1' | '3' | '7' | '28')} 
-              />
-            </div>
-            <Graph 
-              data={aggregateData(logs, period)} 
-              period={period}
+    <div className="dashboard">
+      <h2>ダッシュボード画面</h2>
+      {error && <div className="error-message">{error}</div>}
+      {success && <div className="success-message">{success}</div>}
+      {isLoading && <div className="loading-message">処理中...</div>}
+      <div className="dashboard-content">
+        <div className="dashboard-section">
+          <h3>メッセージ一覧</h3>
+          <div className="message-input">
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="新しいメッセージを入力..."
+              className="message-text-input"
+              disabled={isLoading}
             />
+            <button 
+              onClick={() => handleSendMessage(0)} 
+              className="send-button"
+              disabled={isLoading || !newMessage.trim()}
+            >
+              送信
+            </button>
           </div>
-        </Card>
-      )}
-
-      <AddItemDialog
-        open={showAddDialog}
-        onOpenChange={setShowAddDialog}
-        onSubmit={handleNewItemAdd}
-        type={selectedType}
-      />
-
-      <ScrollArea className="h-[300px]">
-        <div className="space-y-2">
-          {[...todayLogs].reverse().map((log, index) => (
-            <Card key={index} className="p-3">
-              <div className="flex items-center gap-2">
-                {log.type === 'food' ? (
-                  <UtensilsCrossed className="h-5 w-5 flex-shrink-0" />
-                ) : (
-                  <Coffee className="h-5 w-5 flex-shrink-0" />
-                )}
-                <span className="text-lg flex-grow">{log.item.name}</span>
-                <span className="text-sm text-gray-500 whitespace-nowrap">{log.time}</span>
-                <span className="text-lg whitespace-nowrap ml-2">{log.item.amount}mg</span>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="h-8 px-2"
-                  onClick={() => {
-                    const newLogs = logs.filter((_, i) => i !== index);
-                    setLogs(newLogs);
-                    localStorage.setItem('logs', JSON.stringify(newLogs));
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+          <div className="message-list">
+            {messages.map((message) => (
+              <div key={message.id} className="message">
+                <p>{message.text}</p>
+                <small>{message.timestamp}</small>
               </div>
-            </Card>
-          ))}
+            ))}
+          </div>
         </div>
-      </ScrollArea>
+        <div className="dashboard-section">
+          <h3>ファイル一覧</h3>
+          <div className="file-upload">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileSelect}
+              style={{ display: "none" }}
+              disabled={isLoading}
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="upload-button"
+              disabled={isLoading}
+            >
+              ファイルを選択
+            </button>
+            {selectedFile && (
+              <div className="selected-file">
+                <p>{selectedFile.name} ({selectedFile.size})</p>
+                <button 
+                  onClick={() => handleFileUpload(0)}
+                  className="upload-button"
+                  disabled={isLoading}
+                >
+                  アップロード
+                </button>
+              </div>
+            )}
+            <small className="upload-hint">※ 5MB以下のファイル</small>
+          </div>
+          <div className="file-list">
+            {files.map((file) => (
+              <div key={file.id} className="file">
+                <p onClick={() => downloadFile(file.id, file.name)} style={{ cursor: "pointer" }}>
+                  {file.name}
+                </p>
+                <small>
+                  サイズ: {file.size} • {file.timestamp}
+                </small>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="action-buttons">
+        <button onClick={onLogout} className="logout-button" disabled={isLoading}>
+          ログアウト
+        </button>
+      </div>
     </div>
-  )
+  );
+};
+
+function App() {
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleTestLogin = async () => {
+    setIsLoading(true);
+    try {
+      localStorage.setItem("auth_token", "mock_token_for_testing");
+      setToken("mock_token_for_testing");
+      setError("");
+      setMessage("テストユーザーとしてログインしました！");
+    } catch (err) {
+      console.error("Test login error:", err);
+      setError(ERROR_MESSAGES.auth);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("auth_token");
+    setToken(null);
+    setMessage("ログアウトしました。");
+  };
+
+  return (
+    <div className="App">
+      <header className="App-header">
+        <h1>Azure認証デモ</h1>
+        {error && <div className="error-message">{error}</div>}
+        {message && <div className="success-message">{message}</div>}
+        {isLoading && <div className="loading-message">処理中...</div>}
+        
+        {!token ? (
+          <div className="auth-options">
+            <div className="auth-section">
+              <h2>テストユーザーとしてログイン</h2>
+              <button 
+                onClick={handleTestLogin} 
+                className="test-login"
+                disabled={isLoading}
+              >
+                テストログインボタン
+              </button>
+              <p className="hint">※ このボタンをクリックすると、テストユーザーとしてログインできます</p>
+            </div>
+          </div>
+        ) : (
+          <Dashboard onLogout={handleLogout} token={token} />
+        )}
+      </header>
+    </div>
+  );
 }
+
+export default App;
