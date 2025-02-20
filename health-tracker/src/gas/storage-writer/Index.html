@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        padding: 20px;
+        text-align: center;
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        background-color: #f8f9fa;
+      }
+      .button {
+        background-color: #4285f4;
+        border: none;
+        border-radius: 24px;
+        color: white;
+        padding: 20px 40px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 18px;
+        margin: 4px 2px;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        transition: background-color 0.3s;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .button:active {
+        background-color: #3367d6;
+        transform: scale(0.98);
+      }
+      #status {
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 12px;
+        font-size: 16px;
+        display: none;
+      }
+      .success {
+        background-color: #e6f4ea;
+        color: #137333;
+      }
+      .error {
+        background-color: #fce8e6;
+        color: #c5221f;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>ストレージ書き込み</h1>
+    <button class="button" onclick="writeToStorage()">保存する</button>
+    <div id="status"></div>
+    
+    <script>
+      function writeToStorage() {
+        const button = document.querySelector('.button');
+        const status = document.getElementById('status');
+        
+        button.disabled = true;
+        status.style.display = 'block';
+        status.innerHTML = '処理中...';
+        status.className = '';
+        
+        google.script.run
+          .withSuccessHandler(function(result) {
+            button.disabled = false;
+            status.innerHTML = result.message;
+            status.className = result.success ? 'success' : 'error';
+          })
+          .withFailureHandler(function(error) {
+            button.disabled = false;
+            status.innerHTML = 'エラー: ' + error;
+            status.className = 'error';
+          })
+          .writeToStorage();
+      }
+    </script>
+  </body>
+</html>
