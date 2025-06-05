@@ -13,3 +13,8 @@ This repository contains configuration files and settings for managing the GitHu
 - Additional customizations
 
 Feel free to explore and suggest improvements!
+
+## Demo
+
+Run `python hello_codex.py` to see a small Pygame animation. Make sure `pygame` is installed first.
+
