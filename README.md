@@ -18,3 +18,7 @@ Feel free to explore and suggest improvements!
 
 Run `python hello_codex.py` to see a small Pygame animation. Make sure `pygame` is installed first.
 
+You can also play a simple Tetris clone by running `python tetris.py`. The game
+uses the arrow keys for movement and rotation. Lines cleared will increase your
+score.
+
