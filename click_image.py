@@ -5,8 +5,8 @@ import pyautogui
 import keyboard
 
 
-def main():
-    target_image = "target_image.png"  # replace with your image file
+def click_until_escape(target_image: str = "target_image.png", interval: float = 0.2) -> None:
+    """Repeatedly search and click ``target_image`` until ESC is pressed."""
     print("Press ESC to stop.")
     while True:
         if keyboard.is_pressed("esc"):
@@ -17,7 +17,11 @@ def main():
         if location:
             pyautogui.click(location)
 
-        time.sleep(0.2)
+        time.sleep(interval)
+
+
+def main():
+    click_until_escape()
 
 
 if __name__ == "__main__":
