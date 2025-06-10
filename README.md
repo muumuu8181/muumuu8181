@@ -24,3 +24,5 @@ You can also play a simple Tetris clone by running `python tetris.py`. The game
 uses the arrow keys for movement and rotation. Lines cleared will increase your
 score.
 
+For a fun daily message execute `python fortune.py` to see today's fortune.
+
